@@ -10,7 +10,7 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    SQLhandle test = SQLhandle(std::string(argv[1]));
+    SQLhandle test{std::string(argv[1])};
     
     auto r = test.exec(argv[2]);
     std::cout<<r.value()<<std::endl;

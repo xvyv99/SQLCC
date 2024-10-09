@@ -23,6 +23,7 @@ std::optional<std::string> SQLhandle::exec(std::string stmt) {
     if (rc!=SQLITE_OK) {
         fprintf(stderr, "SQL error: %s", zErrMsg);
         sqlite3_free(zErrMsg);
+        return std::nullopt;
     }
     return std::make_optional("Success!");
 }
