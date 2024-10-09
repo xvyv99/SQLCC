@@ -10,5 +10,9 @@ ADD_LIBRARY(sqlite3 STATIC ${PROJECT_SOURCE_DIR}/external/sqlite3/sqlite3.c)
 
 TARGET_INCLUDE_DIRECTORIES(sqlite3 PUBLIC ${PROJECT_SOURCE_DIR}/external/sqlite3)
 
-ADD_EXECUTABLE( filemeta ${PROJECT_SOURCE_DIR}/src/main.cc ${PROJECT_SOURCE_DIR}/src/sql.cc)
+ADD_EXECUTABLE( filemeta 
+    ${PROJECT_SOURCE_DIR}/src/main.cc 
+    ${PROJECT_SOURCE_DIR}/src/sql.cc
+    ${PROJECT_SOURCE_DIR}/src/logging.cc    
+)
 TARGET_LINK_LIBRARIES( filemeta PRIVATE sqlite3 )

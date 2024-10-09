@@ -13,7 +13,7 @@ int main(int argc, char** argv){
     SQLhandle test{std::string(argv[1])};
     
     auto r = test.exec(argv[2]);
-    std::cout<<r.value()<<std::endl;
+    std::cout<<r.value_or("Failed")<<std::endl;
 
     printf("Test message");
     return 0;
