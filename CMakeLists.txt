@@ -5,4 +5,12 @@ CMAKE_MINIMUM_REQUIRED( VERSION 3.30 )
 SET(CMAKE_C_STANDARD 11)
 SET(CMAKE_BUILD_TYPE "Release")
 
+SET(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external/sqlite3")
+
 ADD_EXECUTABLE( filemeta ${PROJECT_SOURCE_DIR}/src/main.c )
+
+FIND_PACKAGE(SQLite3 REQUIRED)
+IF (SQLite3_FOUND)
+    include_directories(${SQLite3_INCLUDE_DIRS})
+    target_link_libraries(filemeta ${SQLite3_LIBRARIES})
+ENDIF (SQLite3 REQUIRED)
