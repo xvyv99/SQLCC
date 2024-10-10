@@ -4,7 +4,7 @@
 #ifndef _LOGGING_H
 #define _LOGGING_H
 
-#define LOG(LEVEL, MSG) logging::LogMsg(__FILE__, __LINE__, (LEVEL), MSG);
+#define LOG(LEVEL) logging::LogMsg(__FILE__, __LINE__, (LEVEL), MSG);
 
 enum LogLevel {
     INFO,
