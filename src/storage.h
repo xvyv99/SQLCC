@@ -1,19 +1,22 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
+#include <optional>
 #include <unordered_map>
 #include <filesystem>
 
 namespace fs = std::filesystem;
+using meta_map = std::unordered_map<std::string, std::string>;
 
 class Meta {
 protected:
-	std::unordered_map<std::string, std::string> meta_info_;
+	meta_map meta_info_;
 public:
-	Meta();
+	Meta(meta_map mm) { this->meta_info_=mm; };
 	~Meta();
 
 	std::string toString(void);
+	std::optional<meta_map> fromString(std::string);
 };
 
 class BaseDB {

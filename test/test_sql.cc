@@ -1,3 +1,4 @@
+#include "../src/sql.h"
 #include <gtest/gtest.h>
 
 namespace {
