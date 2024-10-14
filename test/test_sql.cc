@@ -2,7 +2,7 @@
 
 namespace {
 
-Class SQLTest : public testing::Test {
+class SQLTest : public testing::Test {
 	protected:
 		void SetUp() override {
 			// pass

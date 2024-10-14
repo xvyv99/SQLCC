@@ -37,5 +37,6 @@ ADD_EXECUTABLE( filemeta
     ${PROJECT_SOURCE_DIR}/src/main.cc 
     ${PROJECT_SOURCE_DIR}/src/sql.cc
     ${PROJECT_SOURCE_DIR}/src/logging.cc    
+    ${PROJECT_SOURCE_DIR}/src/storage.cc    
 )
 TARGET_LINK_LIBRARIES( filemeta PRIVATE sqlite3 )
