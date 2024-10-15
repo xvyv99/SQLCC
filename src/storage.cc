@@ -17,7 +17,7 @@ std::string Meta::toString(void) {
 	return oss.str();
 }
 
-std::optional<meta_map> Meta::fromString(std::string ms) {
+static std::optional<meta_map> Meta::fromString(std::string ms) {
 	const char MAP_START = '{';
 	const char MAP_END = '}';
 	const char MAP_KV_SEP = ':';

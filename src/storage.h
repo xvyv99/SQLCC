@@ -16,7 +16,7 @@ public:
 	~Meta();
 
 	std::string toString(void);
-	std::optional<meta_map> fromString(std::string);
+	static std::optional<meta_map> fromString(std::string);
 };
 
 class BaseDB {
