@@ -13,6 +13,7 @@ std::string Meta::toString(void) {
 	return oss.str();
 }
 
+
 std::optional<meta_map> Meta::fromString(std::string ms) {
 	meta_map result;
 
@@ -77,3 +78,15 @@ std::optional<meta_map> Meta::fromString(std::string ms) {
 	}
 	return result;
 }
+
+std::optional<std::string> Meta::operator[](std::string key) {
+    try {
+        return this->meta_info_.at(key);
+    } catch (const std::out_of_range&) {
+        return std::nullopt;
+    }	
+}
+
+bool operator==(const Meta& lhs, const Meta& rhs) {
+	return lhs.meta_info_==rhs.meta_info_;
+};

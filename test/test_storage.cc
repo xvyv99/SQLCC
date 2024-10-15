@@ -10,7 +10,7 @@ TEST(StorageTest, Meta) {
 		{"AB", "CD"},
 		{"EF", "quware"},
 		{"Quant Inf", "I/O Map"},
-		{"Else if", "CI\DI"},
+		{"Else if", "CI\\DI"},
 	};
 	Meta m1(mm1);
 	EXPECT_EQ(Meta::fromString("{o:p,q:r}"), mm1);	
@@ -20,9 +20,11 @@ TEST(StorageTest, Meta) {
 	EXPECT_EQ(Meta::fromString("{o:p,}q:r"), std::nullopt);	
 	EXPECT_EQ(Meta::fromString("{o:p,q:r,"), std::nullopt);	
 
-	Meta m1_copy(Meta::fromString(m1.toString()));
-	EXPECT_EQ(m1.toString(), std::string("{o:p,q:r}"));	
+	Meta m1_copy(Meta::fromString(m1.toString()).value());
+	EXPECT_EQ(m1_copy, m1);	
 
 	Meta m2(mm2);
 	
+	Meta m2_copy(Meta::fromString(m2.toString()).value());
+	EXPECT_EQ(m2_copy, m2);	
 }
