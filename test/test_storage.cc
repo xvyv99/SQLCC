@@ -12,19 +12,24 @@ TEST(StorageTest, Meta) {
 		{"Quant Inf", "I/O Map"},
 		{"Else if", "CI\\DI"},
 	};
-	Meta m1(mm1);
-	EXPECT_EQ(Meta::fromString("{o:p,q:r}"), mm1);	
-	EXPECT_EQ(Meta::fromString("{o:p,q:r,}"), mm1);	
+
+	EXPECT_EQ(Meta::fromString("{o:p,q:r}"), std::make_optional(mm1));	
+	EXPECT_EQ(Meta::fromString("{o:p,q:r,}"), mm1);
+	EXPECT_EQ(Meta::fromString("{q:r,o:p}"), mm1);
 	EXPECT_EQ(Meta::fromString("{o:p,q:r"), std::nullopt);	
 	EXPECT_EQ(Meta::fromString("{o:p,q:r"), std::nullopt);	
 	EXPECT_EQ(Meta::fromString("{o:p,}q:r"), std::nullopt);	
-	EXPECT_EQ(Meta::fromString("{o:p,q:r,"), std::nullopt);	
+	EXPECT_EQ(Meta::fromString("{o:p,q:r,"), std::nullopt);
+	EXPECT_EQ(Meta::fromString("{asfas}"), std::nullopt);	
+	EXPECT_EQ(Meta::fromString("{o:pq:r}"), std::nullopt);
+	EXPECT_EQ(Meta::fromString("{}"), meta_map());
+	EXPECT_EQ(Meta::fromString("}"), std::nullopt);			
 
+	Meta m1(mm1);
 	Meta m1_copy(Meta::fromString(m1.toString()).value());
 	EXPECT_EQ(m1_copy, m1);	
 
 	Meta m2(mm2);
-	
 	Meta m2_copy(Meta::fromString(m2.toString()).value());
 	EXPECT_EQ(m2_copy, m2);	
 }
