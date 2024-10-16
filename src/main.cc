@@ -1,8 +1,7 @@
-#include <cstdio>
-#include <iostream>
 #include <string>
 #include <sqlite3.h>
 #include "sql.h"
+#include "spdlog/spdlog.h"
 
 int main(int argc, char** argv){
     if (argc!=3) {
@@ -13,8 +12,8 @@ int main(int argc, char** argv){
     SQLhandle test{std::string(argv[1])};
     
     auto r = test.exec(argv[2]);
-    std::cout<<r.value_or("Failed")<<std::endl;
+	spdlog::info(r.value_or("Failed"));
 
-    printf("Test message");
+	spdlog::info("Test message.");
     return 0;
 }

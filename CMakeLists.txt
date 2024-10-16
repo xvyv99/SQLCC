@@ -4,7 +4,6 @@ PROJECT( FileMeta )
 SET(CMAKE_CXX_STANDARD 17)
 # SET(CMAKE_BUILD_TYPE "Release")
 SET(CMAKE_BUILD_TYPE Debug)
-
 SET(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external/sqlite3")
 
 ADD_LIBRARY(sqlite3 STATIC ${PROJECT_SOURCE_DIR}/external/sqlite3/sqlite3.c)
@@ -28,7 +27,6 @@ ADD_EXECUTABLE( test_all
   	${PROJECT_SOURCE_DIR}/test/test_storage.cc
     ${PROJECT_SOURCE_DIR}/src/sql.cc
     ${PROJECT_SOURCE_DIR}/src/storage.cc    
-    ${PROJECT_SOURCE_DIR}/src/logging.cc    
 )
 
 TARGET_LINK_LIBRARIES( test_all PRIVATE GTest::gtest_main )
@@ -37,11 +35,16 @@ TARGET_LINK_LIBRARIES( test_all PRIVATE sqlite3 )
 INCLUDE(GoogleTest)
 GTEST_DISCOVER_TESTS(test_all)
 
+IF(NOT TARGET spdlog)
+    # Stand-alone build
+	FIND_PACKAGE(spdlog REQUIRED)
+ENDIF()
+
 ADD_EXECUTABLE( filemeta 
     ${PROJECT_SOURCE_DIR}/src/main.cc 
     ${PROJECT_SOURCE_DIR}/src/sql.cc
-    ${PROJECT_SOURCE_DIR}/src/logging.cc    
     ${PROJECT_SOURCE_DIR}/src/storage.cc    
 )
 
+TARGET_LINK_LIBRARIES( filemeta PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>)
 TARGET_LINK_LIBRARIES( filemeta PRIVATE sqlite3 )

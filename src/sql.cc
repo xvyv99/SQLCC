@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <string>
 #include <optional>
-#include "logging.h"
 
 #include <sqlite3.h>
 #include "sql.h"
