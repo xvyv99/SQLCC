@@ -40,11 +40,22 @@ IF(NOT TARGET spdlog)
 	FIND_PACKAGE(spdlog REQUIRED)
 ENDIF()
 
+INCLUDE(FetchContent)
+FetchContent_Declare(
+    cli11_proj
+    QUIET
+    GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+    GIT_TAG v2.3.2
+)
+
+FetchContent_MakeAvailable(cli11_proj)
+
 ADD_EXECUTABLE( filemeta 
     ${PROJECT_SOURCE_DIR}/src/main.cc 
     ${PROJECT_SOURCE_DIR}/src/sql.cc
     ${PROJECT_SOURCE_DIR}/src/storage.cc    
 )
 
-TARGET_LINK_LIBRARIES( filemeta PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>)
+TARGET_LINK_LIBRARIES( filemeta PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
+TARGET_LINK_LIBRARIES( filemeta PRIVATE CLI11::CLI11 ) 
 TARGET_LINK_LIBRARIES( filemeta PRIVATE sqlite3 )

@@ -1,18 +1,16 @@
 #include <string>
-#include <sqlite3.h>
+
 #include "sql.h"
 #include "spdlog/spdlog.h"
+#include <CLI/CLI.hpp>
 
 int main(int argc, char** argv){
-    if (argc!=3) {
-        fprintf(stderr, "Usage: %s DATABASE SQL-STATEMENT\n", argv[0]);
-        return 1;
-    }
+	CLI::App app{"App description"};
 
-    SQLhandle test{std::string(argv[1])};
-    
-    auto r = test.exec(argv[2]);
-	spdlog::info(r.value_or("Failed"));
+	std::string filename = "default";
+    app.add_option("-f,--file", filename, "A help string");
+
+    CLI11_PARSE(app, argc, argv);
 
 	spdlog::info("Test message.");
     return 0;
