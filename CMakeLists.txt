@@ -29,6 +29,7 @@ ADD_EXECUTABLE( test_all
     ${PROJECT_SOURCE_DIR}/src/storage.cc    
 )
 
+TARGET_LINK_LIBRARIES( test_all PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
 TARGET_LINK_LIBRARIES( test_all PRIVATE GTest::gtest_main )
 TARGET_LINK_LIBRARIES( test_all PRIVATE sqlite3 )
 
@@ -40,15 +41,19 @@ IF(NOT TARGET spdlog)
 	FIND_PACKAGE(spdlog REQUIRED)
 ENDIF()
 
-INCLUDE(FetchContent)
-FetchContent_Declare(
+FIND_PACKAGE(CLI11 CONFIG REQUIRED)
+
+IF(NOT CLI11_FOUND)
+  INCLUDE(FetchContent)
+  FetchContent_Declare(
     cli11_proj
     QUIET
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
     GIT_TAG v2.3.2
-)
+  )
 
-FetchContent_MakeAvailable(cli11_proj)
+  FetchContent_MakeAvailable(cli11_proj)
+ENDIF()
 
 ADD_EXECUTABLE( filemeta 
     ${PROJECT_SOURCE_DIR}/src/main.cc 

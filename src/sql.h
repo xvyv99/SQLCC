@@ -20,6 +20,8 @@ protected:
 	row_name row_;
 	std::size_t line_count_;
 public:
+	friend class SQLiteHandle;
+
 	SQLResult(void);
 	~SQLResult(void);
 
@@ -55,7 +57,6 @@ public:
 	~SQLiteHandle();
 
 	SQLResult exec(std::string) override;
-	std::optional<SQLResult> query(std::string_view);
 };
 
 #endif
