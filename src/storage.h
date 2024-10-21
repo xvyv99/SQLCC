@@ -11,6 +11,7 @@ using meta_map = std::unordered_map<std::string, std::string>;
 class Meta {
 protected:
 	meta_map meta_info_;
+	meta_map meta_info_sql_;
 public:
 	const static char MAP_START = '{';
 	const static char MAP_END = '}';
