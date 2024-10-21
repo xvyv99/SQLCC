@@ -47,6 +47,10 @@ int SQLiteCallBack(SQLiteResult&, int, char **, char **);
 class SQLHandle {
 public:
     virtual SQLResult exec(std::string)=0;
+	SQLResult create(void);
+	SQLResult insert(void);
+	SQLResult update(void);
+	SQLResult del(void);
 };
 
 class SQLiteHandle: public SQLHandle {
