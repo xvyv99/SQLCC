@@ -10,14 +10,14 @@
 
 using sql_result = std::vector<std::vector<std::string>>; 
 // 定义外层为行,内层为列,即[row][col]
-using row_name = std::vector<std::string>;
+using col_name = std::vector<std::string>;
 using ret_line = std::optional<std::vector<std::string_view>>;
 using ret_str = std::optional<std::string_view>;
 
 class SQLResult {
 protected:
 	sql_result result_;
-	row_name row_;
+	col_name col_;
 	std::size_t line_count_;
 public:
 	friend class SQLiteHandle;

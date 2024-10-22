@@ -30,9 +30,9 @@ int SQLResult::lineCount(void) const {
 }
 
 ret_str SQLResult::operator()(std::size_t row_num, std::string_view col_name) const {
-	auto it = std::find(this->row_.begin(), this->row_.end(), col_name);
-	if (it!=this->row_.end()) {
-		std::size_t index = std::distance(this->row_.begin(), it);
+	auto it = std::find(this->col_.begin(), this->col_.end(), col_name);
+	if (it!=this->col_.end()) {
+		std::size_t index = std::distance(this->col_.begin(), it);
 		return std::string_view(result_[row_num][index]);
 	} else {
 		spdlog::error("Key {} not found!", col_name);
@@ -76,7 +76,7 @@ SQLResult SQLiteHandle::exec(std::string stmt) {
 			int col_count = sqlite3_column_count(sql_stmt);
 			if (sqlite_res.line_count_==-1) {
 				for (int i=0;i<col_count;i++) {
-					sqlite_res.row_.emplace_back(sqlite3_column_name(sql_stmt, i));
+					sqlite_res.col_.emplace_back(sqlite3_column_name(sql_stmt, i));
 				}
 				sqlite_res.line_count_ = 1;
 			} else {
