@@ -17,20 +17,31 @@ private:
     std::vector<std::vector<T>> data_;
     index_name col_names_;
     df_shape shape_;
-public:
-    DataFrame();
-    DataFrame(index_name);
-    ~DataFrame();
 
-    df_shape shape();
-    bool hasValue();
+    std::optional<std::size_t> canFindName(std::string col_name) {
+        auto it = std::find(this->col_names_.begin(), this->col_names_.end(), col_name);
+	    if (it!=this->col_names_.end()) {
+		    return std::distance(this->col_names_.begin(), it);
+    	} else {
+		    return std::nullopt;
+	    }
+    }
+public:
+    DataFrame(void);
+    DataFrame(index_name);
+    ~DataFrame(void);
+
+    df_shape shape(void);
+    bool hasValue(void);
     bool setColN(index_name);
 
     bool addRow(std::vector<T>);
     // void addCol(std::vector<T> col);
 
-    std::optional<T> access(std::size_t, std::string_view);
-    std::optional<T> access(std::size_t, std::size_t);
+    std::optional<T> access_item(std::size_t, std::string_view);
+    std::optional<T> access_item(std::size_t, std::size_t);
+    std::optional<std::vector<T>> accessCol(std::string_view);
+    std::optional<std::vector<T>> accessRow(std::size_t);
 
     std::optional<T> operator()(std::size_t, std::string_view);
     std::optional<T> operator()(std::size_t, std::size_t);
@@ -89,20 +100,28 @@ bool DataFrame<T>::addRow(std::vector<T> row) {
 }
 
 template <typename T>
-std::optional<T> DataFrame<T>::access(std::size_t row_num, std::string_view col_name) {
+std::optional<T> DataFrame<T>::access_item(std::size_t row_num, std::string_view col_name) {
     if (row_num>=this->shape().first) 
         return std::nullopt;
-    auto it = std::find(this->col_names_.begin(), this->col_names_.end(), col_name);
+    
+    std::optional<std::size_t> res = this->canFindName(col_name);
+    if (res.has_value()) {
+        return this->data_[row_num][res.value()];
+    } else {
+        return std::nullopt;
+    }
+
+    /*auto it = std::find(this->col_names_.begin(), this->col_names_.end(), col_name);
 	if (it!=this->col_names_.end()) {
 		std::size_t index = std::distance(this->col_names_.begin(), it);
 		return this->data_[row_num][index];
 	} else {
 		return std::nullopt;
-	}
+	}*/
 }
 
 template <typename T>
-std::optional<T> DataFrame<T>::access(std::size_t row_num, std::size_t col_num) {
+std::optional<T> DataFrame<T>::access_item(std::size_t row_num, std::size_t col_num) {
     if (row_num<this->shape().first && col_num<this->shape().second) {
         return this->data_[row_num][col_num];
     } else {
@@ -111,13 +130,27 @@ std::optional<T> DataFrame<T>::access(std::size_t row_num, std::size_t col_num) 
 }
 
 template <typename T>
+std::optional<std::vector<T>> DataFrame<T>::accessCol(std::string_view col_name) {
+
+};
+
+template <typename T>
+std::optional<std::vector<T>> DataFrame<T>::accessRow(std::size_t row_num) {
+    if (row_num>=this->shape().first) {
+        return std::nullopt;
+    } else {
+        return this->data_[row_num];
+    }
+};
+
+template <typename T>
 std::optional<T> DataFrame<T>::operator()(std::size_t row_num, std::string_view col_name) {
-    return this->access(row_num, col_name);
+    return this->access_item(row_num, col_name);
 };
 
 template <typename T>
 std::optional<T> DataFrame<T>::operator()(std::size_t row_num, std::size_t col_num) {
-    return this->access(row_num, col_num);
+    return this->access_item(row_num, col_num);
 };
 
 #endif

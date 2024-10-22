@@ -1,3 +1,4 @@
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -5,53 +6,66 @@
 #include <iterator>
 #include <utility>
 #include <optional>
+#include <sstream>
 #include "spdlog/spdlog.h"
 
 #include <sqlite3.h>
 #include "sql.h"
 
-SQLResult::SQLResult() {this->line_count_=-1;}
-SQLResult::~SQLResult() {}
-
-std::optional<std::pair<std::size_t, std::size_t>> SQLResult::shape(void) const {
-	std::size_t row = this->result_.size();
-	if (row==0) {
-		return std::nullopt;
-	}
-	std::size_t col = this->result_[0].size();
-	if (col==0) {
-		return std::nullopt;
-	}
-	return std::make_pair(row, col);
+std::string SQLHandle::getTypeName(ColType colt) {
+	std::string res;
+	switch (colt) {
+	case SQLHandle::ColType::TEXT :
+		res = "TEXT";
+		break;
+	case SQLHandle::ColType::BLOB :
+		res = "BLOB";
+		break;
+	case SQLHandle::ColType::REAL :
+		res = "REAL";
+		break;
+	case SQLHandle::ColType::INTEGER :
+		res = "INTEGER";
+		break;
+	default:
+		break;
+	} return res;
 }
 
-int SQLResult::lineCount(void) const {
-	return this->line_count_;
+bool SQLHandle::create(
+		std::string table_name, 
+		std::vector<std::string> col_names, 
+		std::vector<SQLHandle::ColType> col_types,
+		bool create_if_not_exists
+	) {
+	
+	std::ostringstream stmt;
+	if (col_names.size()!=col_types.size() || col_names.size()==0)
+		return false;
+	int col_count = col_names.size();
+	stmt << "CREATE TABLE "
+		<<(create_if_not_exists ? "IF NOT EXISTS ":" ")
+		<<table_name<< " (";
+	for (int i=0;i<col_count;i++) {
+		stmt <<" "<<col_names[i]<<" "
+			<<SQLHandle::getTypeName(col_types[i])
+			<<((col_count-i)>1 ? ",":"");
+			// 保证最后一项不输出逗号
+	} stmt << ");";
+	std::cout<<stmt.str()<<std::endl;
+
+	return this->exec(stmt.str()).isSuccess();
 }
 
-ret_str SQLResult::operator()(std::size_t row_num, std::string_view col_name) const {
-	auto it = std::find(this->col_.begin(), this->col_.end(), col_name);
-	if (it!=this->col_.end()) {
-		std::size_t index = std::distance(this->col_.begin(), it);
-		return std::string_view(result_[row_num][index]);
-	} else {
-		spdlog::error("Key {} not found!", col_name);
-		return std::nullopt;
-	}
-}
+SQLResult SQLHandle::select(void) {return SQLResult(SQLITE_OK);}
+bool SQLHandle::insert(void) {return true;}
+bool SQLHandle::update(void) {return true;}
+bool SQLHandle::del(void) {return true;}
 
-ret_line SQLResult::operator()(std::size_t row_num) const {
-	return std::nullopt;
+SQLResult SQLHandle::getTables(void) {
+	constexpr char stmt[] = "SELECT * FROM sqlite_master WHERE type='table';";
+	return this->exec(std::string(stmt));
 }
-
-ret_line SQLResult::operator()(std::string_view col_name) const {
-	return std::nullopt;
-}
-
-SQLResult SQLHandle::create(void) {return SQLResult();};
-SQLResult SQLHandle::insert(void) {return SQLResult();};
-SQLResult SQLHandle::update(void) {return SQLResult();};
-SQLResult SQLHandle::del(void) {return SQLResult();};
 
 SQLiteHandle::SQLiteHandle(std::string_view db_name) {
     int64_t rc = sqlite3_open(db_name.data(), &(this->db_));
@@ -66,23 +80,21 @@ SQLiteHandle::~SQLiteHandle() {
     sqlite3_close(this->db_);
 }
 
+// FIXME:所有的列全视为 TEXT,需要改进
 SQLResult SQLiteHandle::exec(std::string stmt) {
-	SQLiteResult sqlite_res;
 	sqlite3_stmt* sql_stmt;
-
 	int rc = sqlite3_prepare_v2(this->db_, stmt.c_str(), stmt.length(), &sql_stmt, NULL);
+	SQLResult sqlite_res{rc};
 	if (rc==SQLITE_OK) {
 		while (sqlite3_step(sql_stmt)==SQLITE_ROW) {
 			int col_count = sqlite3_column_count(sql_stmt);
-			if (sqlite_res.line_count_==-1) {
+			if (!sqlite_res.hasValue()) {
+				std::vector<std::string> col_names;
 				for (int i=0;i<col_count;i++) {
-					sqlite_res.col_.emplace_back(sqlite3_column_name(sql_stmt, i));
+					col_names.emplace_back(sqlite3_column_name(sql_stmt, i));
 				}
-				sqlite_res.line_count_ = 1;
-			} else {
-				sqlite_res.line_count_++;
+				sqlite_res.setColN(col_names);
 			}
-
 			std::vector<std::string> row;
 			for (int i=0;i<col_count;i++) {
 				const unsigned char* text_value = sqlite3_column_text(sql_stmt, i);
@@ -92,7 +104,7 @@ SQLResult SQLiteHandle::exec(std::string stmt) {
                 	row.push_back("");  
             	}
 			}
-			sqlite_res.result_.push_back(row);
+			sqlite_res.addRow(row);
 		}
 	} else {
 		spdlog::error("SQL error {}!", sqlite3_errmsg(this->db_));

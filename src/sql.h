@@ -4,53 +4,50 @@
 #include <utility>
 #include <vector>
 #include <cstddef>
+#include "dataframe.hpp"
 
 #ifndef _SQL_H
 #define _SQL_H
 
-using sql_result = std::vector<std::vector<std::string>>; 
-// 定义外层为行,内层为列,即[row][col]
+// using SQLResult = DataFrame<std::string>;
 using col_name = std::vector<std::string>;
 using ret_line = std::optional<std::vector<std::string_view>>;
 using ret_str = std::optional<std::string_view>;
 
-class SQLResult {
-protected:
-	sql_result result_;
-	col_name col_;
-	std::size_t line_count_;
+class SQLResult: public DataFrame<std::string> {
+private:
+	int rc_; // 传递查询状态 // TODO:计划改成枚举形式，以兼容多种 SQL 数据库
 public:
-	friend class SQLiteHandle;
+	SQLResult (int rc) : DataFrame<std::string>(), rc_(rc) {};
 
-	SQLResult(void);
-	~SQLResult(void);
-
-	int lineCount(void) const;
-	std::optional<std::pair<std::size_t, std::size_t>> shape(void) const;
-	bool hasValue(void) {
-		return this->line_count_!=-1;
+	bool isSuccess(void) {
+		return (this->rc_==SQLITE_OK);
 	};
-
-	ret_str operator()(std::size_t, std::string_view) const;
-	ret_line operator()(std::size_t) const;
-	ret_line operator()(std::string_view) const;
 };
-
-class SQLiteResult : public SQLResult {
-public:
-	friend int SQLiteCallBack(SQLiteResult&, int, char **, char **);
-};
-
-int CallBack(void *NotUsed, int argc, char **argv, char **azColName);
-int SQLiteCallBack(SQLiteResult&, int, char **, char **);
 
 class SQLHandle {
 public:
+	enum class ColType {
+        TEXT, INTEGER, REAL, BLOB
+    };
+
     virtual SQLResult exec(std::string)=0;
-	SQLResult create(void);
-	SQLResult insert(void);
-	SQLResult update(void);
-	SQLResult del(void);
+
+	bool create(
+		std::string table_name, 
+		std::vector<std::string> col_names, 
+		std::vector<SQLHandle::ColType> col_types,
+		bool create_if_exists
+	);
+
+	SQLResult select(void);
+	bool insert(void);
+	bool update(void);
+	bool del(void);
+
+	SQLResult getTables(void);
+private:
+	static std::string getTypeName(ColType);
 };
 
 class SQLiteHandle: public SQLHandle {
