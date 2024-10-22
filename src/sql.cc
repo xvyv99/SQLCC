@@ -95,7 +95,7 @@ SQLResult SQLiteHandle::exec(std::string stmt) {
 				}
 				sqlite_res.setColN(col_names);
 			}
-			std::vector<std::string> row;
+			std::vector<std::string> row; row.reserve(col_count);
 			for (int i=0;i<col_count;i++) {
 				const unsigned char* text_value = sqlite3_column_text(sql_stmt, i);
 				if (text_value) {

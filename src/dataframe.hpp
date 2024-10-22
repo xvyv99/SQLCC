@@ -1,5 +1,5 @@
-#ifndef _DATAFRAME_H
-#define _DATAFRAME_H
+#ifndef _DATAFRAME_HPP
+#define _DATAFRAME_HPP
 
 #include <string>
 #include <vector>
@@ -18,14 +18,7 @@ private:
     index_name col_names_;
     df_shape shape_;
 
-    std::optional<std::size_t> canFindName(std::string col_name) {
-        auto it = std::find(this->col_names_.begin(), this->col_names_.end(), col_name);
-	    if (it!=this->col_names_.end()) {
-		    return std::distance(this->col_names_.begin(), it);
-    	} else {
-		    return std::nullopt;
-	    }
-    }
+    std::optional<std::size_t> canFindName(std::string_view);
 public:
     DataFrame(void);
     DataFrame(index_name);
@@ -38,13 +31,16 @@ public:
     bool addRow(std::vector<T>);
     // void addCol(std::vector<T> col);
 
-    std::optional<T> access_item(std::size_t, std::string_view);
-    std::optional<T> access_item(std::size_t, std::size_t);
+    std::optional<T> accessItem(std::size_t, std::string_view);
+    std::optional<T> accessItem(std::size_t, std::size_t);
     std::optional<std::vector<T>> accessCol(std::string_view);
     std::optional<std::vector<T>> accessRow(std::size_t);
 
     std::optional<T> operator()(std::size_t, std::string_view);
     std::optional<T> operator()(std::size_t, std::size_t);
+
+    std::optional<std::vector<T>> operator()(std::size_t);
+    std::optional<std::vector<T>> operator()(std::string_view);
 };
 
 template <typename T>
@@ -63,6 +59,16 @@ DataFrame<T>::DataFrame(index_name coln) {
 }
 
 template <typename T>
+std::optional<std::size_t> DataFrame<T>::canFindName(std::string_view col_name) {
+    auto it = std::find(this->col_names_.begin(), this->col_names_.end(), col_name);
+    if (it!=this->col_names_.end()) {
+        return std::distance(this->col_names_.begin(), it);
+    } else {
+        return std::nullopt;
+    }
+}
+
+template <typename T>
 DataFrame<T>::~DataFrame() {}
 
 template <typename T>
@@ -78,10 +84,12 @@ bool DataFrame<T>::hasValue() {
 template <typename T>
 bool DataFrame<T>::setColN(index_name coln) {
     if ((this->shape_.second!=coln.size() && this->shape_.second>0) || coln.size()==0)
-        return false; 
+        return false;
+     
     std::unordered_set<std::string> tmp_set(coln.begin(), coln.end());
     if (tmp_set.size()!=coln.size())
         return false;
+
     if (this->shape_.second==0)
         this->shape_.second = coln.size();
     this->col_names_ = coln;
@@ -100,28 +108,20 @@ bool DataFrame<T>::addRow(std::vector<T> row) {
 }
 
 template <typename T>
-std::optional<T> DataFrame<T>::access_item(std::size_t row_num, std::string_view col_name) {
+std::optional<T> DataFrame<T>::accessItem(std::size_t row_num, std::string_view col_name) {
     if (row_num>=this->shape().first) 
         return std::nullopt;
     
-    std::optional<std::size_t> res = this->canFindName(col_name);
-    if (res.has_value()) {
-        return this->data_[row_num][res.value()];
+    std::optional<std::size_t> res_o = this->canFindName(col_name);
+    if (res_o.has_value()) {
+        return this->data_[row_num][res_o.value()];
     } else {
         return std::nullopt;
     }
-
-    /*auto it = std::find(this->col_names_.begin(), this->col_names_.end(), col_name);
-	if (it!=this->col_names_.end()) {
-		std::size_t index = std::distance(this->col_names_.begin(), it);
-		return this->data_[row_num][index];
-	} else {
-		return std::nullopt;
-	}*/
 }
 
 template <typename T>
-std::optional<T> DataFrame<T>::access_item(std::size_t row_num, std::size_t col_num) {
+std::optional<T> DataFrame<T>::accessItem(std::size_t row_num, std::size_t col_num) {
     if (row_num<this->shape().first && col_num<this->shape().second) {
         return this->data_[row_num][col_num];
     } else {
@@ -131,7 +131,17 @@ std::optional<T> DataFrame<T>::access_item(std::size_t row_num, std::size_t col_
 
 template <typename T>
 std::optional<std::vector<T>> DataFrame<T>::accessCol(std::string_view col_name) {
-
+    std::optional<std::size_t> res_o = this->canFindName(col_name);
+    if (!res_o.has_value()) {
+        return std::nullopt;
+    } else {
+        std::size_t col_num = res_o.value();
+        std::size_t line_count = this->shape().first;
+        std::vector<T> res_vec; res_vec.reserve(line_count);
+        for (int i=0;i<line_count;i++)
+            res_vec.push_back(this->data_[i][col_num]);
+        return res_vec;
+    }
 };
 
 template <typename T>
@@ -145,12 +155,22 @@ std::optional<std::vector<T>> DataFrame<T>::accessRow(std::size_t row_num) {
 
 template <typename T>
 std::optional<T> DataFrame<T>::operator()(std::size_t row_num, std::string_view col_name) {
-    return this->access_item(row_num, col_name);
+    return this->accessItem(row_num, col_name);
 };
 
 template <typename T>
 std::optional<T> DataFrame<T>::operator()(std::size_t row_num, std::size_t col_num) {
-    return this->access_item(row_num, col_num);
+    return this->accessItem(row_num, col_num);
+};
+
+template <typename T>
+std::optional<std::vector<T>> DataFrame<T>::operator()(std::size_t row_num) {
+    return this->accessRow(row_num);
+};
+
+template <typename T>
+std::optional<std::vector<T>> DataFrame<T>::operator()(std::string_view col_name) {
+    return this->accessCol(col_name);
 };
 
 #endif
