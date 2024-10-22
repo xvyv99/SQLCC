@@ -24,7 +24,7 @@ TEST_F(SQLiteTest, TableProcess) {
 	sqlh.exec("INSERT INTO BASE VALUES (\"TEST1\", \"TEST2\");");
 	sqlh.exec("INSERT INTO BASE VALUES (\"TEST3\", \"TEST4\");");
 	SQLResult sqlr1 = sqlh.exec("SELECT NAME,PATH FROM BASE;");
-	EXPECT_TRUE(sqlr1.hasValue());
+	ASSERT_TRUE(sqlr1.hasValue());
 	EXPECT_EQ(sqlr1(0, "NAME"), "TEST1");
 	EXPECT_EQ(sqlr1(0, "PATH"), "TEST2");
 	EXPECT_EQ(sqlr1(1, "NAME"), "TEST3");

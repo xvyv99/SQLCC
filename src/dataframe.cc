@@ -1,9 +1,3 @@
 #include "dataframe.h"
+#include <utility>
 
-DataFrame::DataFrame(/* args */) {
-
-}
-
-DataFrame::~DataFrame() {
-
-}

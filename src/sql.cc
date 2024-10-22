@@ -48,10 +48,10 @@ ret_line SQLResult::operator()(std::string_view col_name) const {
 	return std::nullopt;
 }
 
-SQLResult SQLHandle::create(void) {};
-SQLResult SQLHandle::insert(void) {};
-SQLResult SQLHandle::update(void) {};
-SQLResult SQLHandle::del(void) {};
+SQLResult SQLHandle::create(void) {return SQLResult();};
+SQLResult SQLHandle::insert(void) {return SQLResult();};
+SQLResult SQLHandle::update(void) {return SQLResult();};
+SQLResult SQLHandle::del(void) {return SQLResult();};
 
 SQLiteHandle::SQLiteHandle(std::string_view db_name) {
     int64_t rc = sqlite3_open(db_name.data(), &(this->db_));

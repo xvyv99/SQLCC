@@ -22,19 +22,39 @@ FetchContent_MakeAvailable(googletest)
 
 ENABLE_TESTING()
 
-ADD_EXECUTABLE( test_all
-  	${PROJECT_SOURCE_DIR}/test/test_sql.cc
-  	${PROJECT_SOURCE_DIR}/test/test_storage.cc
-    ${PROJECT_SOURCE_DIR}/src/sql.cc
-    ${PROJECT_SOURCE_DIR}/src/storage.cc    
+ADD_EXECUTABLE( test_df
+    ${PROJECT_SOURCE_DIR}/test/test_df.cc
+    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
 )
 
-TARGET_LINK_LIBRARIES( test_all PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
-TARGET_LINK_LIBRARIES( test_all PRIVATE GTest::gtest_main )
-TARGET_LINK_LIBRARIES( test_all PRIVATE sqlite3 )
+ADD_EXECUTABLE( test_sql
+  	${PROJECT_SOURCE_DIR}/test/test_sql.cc
+    ${PROJECT_SOURCE_DIR}/src/sql.cc
+    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
+)
+
+ADD_EXECUTABLE( test_storage
+  	${PROJECT_SOURCE_DIR}/test/test_storage.cc
+    ${PROJECT_SOURCE_DIR}/src/sql.cc
+    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
+    ${PROJECT_SOURCE_DIR}/src/storage.cc   
+)
+
+TARGET_LINK_LIBRARIES( test_df PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
+TARGET_LINK_LIBRARIES( test_df PRIVATE GTest::gtest_main )
+
+TARGET_LINK_LIBRARIES( test_sql PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
+TARGET_LINK_LIBRARIES( test_sql PRIVATE GTest::gtest_main )
+TARGET_LINK_LIBRARIES( test_sql PRIVATE sqlite3 )
+
+TARGET_LINK_LIBRARIES( test_storage PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
+TARGET_LINK_LIBRARIES( test_storage PRIVATE GTest::gtest_main )
+TARGET_LINK_LIBRARIES( test_storage PRIVATE sqlite3 )
 
 INCLUDE(GoogleTest)
-GTEST_DISCOVER_TESTS(test_all)
+GTEST_DISCOVER_TESTS(test_df)
+GTEST_DISCOVER_TESTS(test_sql)
+GTEST_DISCOVER_TESTS(test_storage)
 
 IF(NOT TARGET spdlog)
     # Stand-alone build
@@ -58,7 +78,8 @@ ENDIF()
 ADD_EXECUTABLE( filemeta 
     ${PROJECT_SOURCE_DIR}/src/main.cc 
     ${PROJECT_SOURCE_DIR}/src/sql.cc
-    ${PROJECT_SOURCE_DIR}/src/storage.cc    
+    ${PROJECT_SOURCE_DIR}/src/storage.cc 
+    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
 )
 
 TARGET_LINK_LIBRARIES( filemeta PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
