@@ -23,20 +23,17 @@ FetchContent_MakeAvailable(googletest)
 ENABLE_TESTING()
 
 ADD_EXECUTABLE( test_df
-    ${PROJECT_SOURCE_DIR}/test/test_df.cc
-    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
+    ${PROJECT_SOURCE_DIR}/test/test_df.cc 
 )
 
 ADD_EXECUTABLE( test_sql
   	${PROJECT_SOURCE_DIR}/test/test_sql.cc
     ${PROJECT_SOURCE_DIR}/src/sql.cc
-    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
 )
 
 ADD_EXECUTABLE( test_storage
   	${PROJECT_SOURCE_DIR}/test/test_storage.cc
     ${PROJECT_SOURCE_DIR}/src/sql.cc
-    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
     ${PROJECT_SOURCE_DIR}/src/storage.cc   
 )
 
@@ -78,8 +75,7 @@ ENDIF()
 ADD_EXECUTABLE( filemeta 
     ${PROJECT_SOURCE_DIR}/src/main.cc 
     ${PROJECT_SOURCE_DIR}/src/sql.cc
-    ${PROJECT_SOURCE_DIR}/src/storage.cc 
-    ${PROJECT_SOURCE_DIR}/src/dataframe.cc   
+    ${PROJECT_SOURCE_DIR}/src/storage.cc   
 )
 
 TARGET_LINK_LIBRARIES( filemeta PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32> )
