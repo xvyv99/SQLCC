@@ -42,10 +42,10 @@ TEST(DFtest, int) {
     EXPECT_EQ(df3.accessCol("  ").value(), r2);
     EXPECT_EQ(df3.accessRow(1).value(), r3);
     EXPECT_EQ(df3.accessRow(3).value(), r3);
-    EXPECT_EQ(df3("").value(), r1);
-    EXPECT_EQ(df3("  ").value(), r2);
-    EXPECT_EQ(df3(1).value(), r3);
-    EXPECT_EQ(df3(4).value(), r3);
+    EXPECT_EQ(df3[""].value(), r1);
+    EXPECT_EQ(df3["  "].value(), r2);
+    EXPECT_EQ(df3[1].value(), r3);
+    EXPECT_EQ(df3[4].value(), r3);
 }
 
 TEST(DFtest, string) {
@@ -89,8 +89,8 @@ TEST(DFtest, string) {
     EXPECT_EQ(df4.accessCol("kln").value(), r5);
     EXPECT_EQ(df4.accessRow(1).value(), r6);
     EXPECT_EQ(df4.accessRow(2).value(), r6);
-    EXPECT_EQ(df4("def").value(), r4);
-    EXPECT_EQ(df4("kln").value(), r5);
-    EXPECT_EQ(df4(1).value(), r6);
-    EXPECT_EQ(df4(2).value(), r6);
+    EXPECT_EQ(df4["def"].value(), r4);
+    EXPECT_EQ(df4["kln"].value(), r5);
+    EXPECT_EQ(df4[1].value(), r6);
+    EXPECT_EQ(df4[2].value(), r6);
 }

@@ -39,8 +39,8 @@ public:
     std::optional<T> operator()(std::size_t, std::string_view);
     std::optional<T> operator()(std::size_t, std::size_t);
 
-    std::optional<std::vector<T>> operator()(std::size_t);
-    std::optional<std::vector<T>> operator()(std::string_view);
+    std::optional<std::vector<T>> operator[](std::size_t);
+    std::optional<std::vector<T>> operator[](std::string_view);
 };
 
 template <typename T>
@@ -164,12 +164,12 @@ std::optional<T> DataFrame<T>::operator()(std::size_t row_num, std::size_t col_n
 };
 
 template <typename T>
-std::optional<std::vector<T>> DataFrame<T>::operator()(std::size_t row_num) {
+std::optional<std::vector<T>> DataFrame<T>::operator[](std::size_t row_num) {
     return this->accessRow(row_num);
 };
 
 template <typename T>
-std::optional<std::vector<T>> DataFrame<T>::operator()(std::string_view col_name) {
+std::optional<std::vector<T>> DataFrame<T>::operator[](std::string_view col_name) {
     return this->accessCol(col_name);
 };
 
