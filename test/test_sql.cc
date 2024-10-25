@@ -1,14 +1,18 @@
 #include "../src/sql.h"
 #include <gtest/gtest.h>
 #include <optional>
+#include <expected>
 #include <iostream>
+#include <set>
+
+using namespace SQL;
 
 namespace {
 
 class SQLiteTest : public testing::Test {
 protected:
 	void SetUp() override {
-	//	SQLiteHandle sqlh = SQLiteHandle("./test.db");
+	//	SQLiteConn sqlh = SQLiteConn("./test.db");
 	//	sqlh.exec("CREATE TABLE BASE {NAME TEXT, PATH TEXT};");
 	}
 
@@ -16,15 +20,15 @@ protected:
 
 	}
 	
-	//SQLiteHandle sqlh;
+	//SQLiteConn sqlh;
 };	
 
 TEST_F(SQLiteTest, exec) {
-	SQLiteHandle sqlh = SQLiteHandle("./test.db");
+	SQLiteConn sqlh = SQLiteConn("./test.db");
 	sqlh.exec("CREATE TABLE IF NOT EXISTS BASE (NAME TEXT, PATH TEXT);");
 	sqlh.exec("INSERT INTO BASE VALUES (\"TEST1\", \"TEST2\");");
 	sqlh.exec("INSERT INTO BASE VALUES (\"TEST3\", \"TEST4\");");
-	SQLResult sqlr1 = sqlh.exec("SELECT NAME,PATH FROM BASE;");
+	Result sqlr1 = sqlh.exec("SELECT NAME,PATH FROM BASE;");
 	ASSERT_TRUE(sqlr1.hasValue());
 	EXPECT_EQ(sqlr1(0, "NAME"), "TEST1");
 	EXPECT_EQ(sqlr1(0, "PATH"), "TEST2");
@@ -33,28 +37,31 @@ TEST_F(SQLiteTest, exec) {
 }
 
 TEST_F(SQLiteTest, create) {
-	SQLiteHandle sqlh = SQLiteHandle("./test.db");
+	SQLiteConn sqlh = SQLiteConn("./test.db");
 	EXPECT_TRUE(sqlh.create(
 		"Hello", 
 		{"ACD", "asd", "enti"}, 
-		{SQLHandle::ColType::TEXT, SQLHandle::ColType::TEXT, SQLHandle::ColType::TEXT},
+		{Conn::ColType::TEXT, Conn::ColType::TEXT, Conn::ColType::TEXT},
 		true
 	));
 		EXPECT_TRUE(sqlh.create(
 		"Gello", 
 		{"ACD", "asd", "enti"}, 
-		{SQLHandle::ColType::TEXT, SQLHandle::ColType::TEXT, SQLHandle::ColType::TEXT},
+		{Conn::ColType::TEXT, Conn::ColType::TEXT, Conn::ColType::TEXT},
 		true
 	));
 	EXPECT_TRUE(sqlh.create(
 		"World", 
 		{"ACD", "asd", "enti"}, 
-		{SQLHandle::ColType::INTEGER, SQLHandle::ColType::BLOB, SQLHandle::ColType::TEXT},
+		{Conn::ColType::INTEGER, Conn::ColType::BLOB, Conn::ColType::TEXT},
 		true
 	));
-	SQLResult sr = sqlh.getTables();
+	Result sr = sqlh.getTables();
 	ASSERT_TRUE(sr.isSuccess());
-	std::cout << sr.shape().first <<sr.shape().second;
+	auto srv = sr["name"].value();
+	std::set<std::string> ss = {"BASE", "Hello", "Gello", "World"};
+	std::set<std::string> so{srv.begin(), srv.end()};
+	EXPECT_EQ(so, ss);
 }
 
 }
