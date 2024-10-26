@@ -108,6 +108,11 @@ SQL::Result SQL::Conn::getTables(void) {
 	return this->exec(std::string(stmt));
 }
 
+std::unique_ptr<SQL::Stmt> SQL::SQLiteConn::preCompile(std::string_view stmt) {
+	std::unique_ptr<SQL::SQLiteStmt> sqlite_stmt = std::make_unique<SQL::SQLiteStmt>(this->db_, stmt);
+	return std::move(sqlite_stmt);
+}
+
 SQL::SQLiteConn::SQLiteConn(std::string_view db_path) {
     int64_t rc = sqlite3_open(db_path.data(), &(this->db_));
     if (rc) {
@@ -156,6 +161,14 @@ SQL::Result SQL::SQLiteConn::exec(std::string stmt) {
 	return sqlite_res;
 }
 
+SQL::SQLiteStmt::SQLiteStmt(sqlite3* db, std::string_view sql_stmt) : db_(db) {
+	int rc_ = sqlite3_prepare_v2(db_, sql_stmt.data(), sql_stmt.length(), &this->stmt_, NULL);
+	std::unique_ptr<SQLiteError> sqlite_err = std::make_unique<SQLiteError>(rc_);
+	this->err_ = std::move(sqlite_err);
+}
+
+SQL::SQLiteStmt::~SQLiteStmt() {}
+
 bool SQL::SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	int bind_param_count = sqlite3_bind_parameter_count(this->stmt_);
 	int count = std::min(static_cast<size_t>(bind_param_count), params.size());
@@ -164,3 +177,12 @@ bool SQL::SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	}
 	return true;
 }
+
+int SQL::SQLiteStmt::step() {}
+
+int SQL::SQLiteStmt::colCount() {}
+SQL::ret_str SQL::SQLiteStmt::colName() {}
+SQL::ret_line SQL::SQLiteStmt::colNames() {}
+
+SQL::ret_str SQL::SQLiteStmt::get_TEXT() {}
+SQL::ret_line SQL::SQLiteStmt::getRow_TEXT() {}

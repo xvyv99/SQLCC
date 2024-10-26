@@ -68,6 +68,17 @@ public:
 	bool isSuccess(void) const {
 		return (this->err_->is(Error::Code::OK));
 	}
+
+	virtual bool fmt(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
+
+	virtual int step(void)=0; 
+
+	virtual int colCount(void)=0;
+	virtual ret_str colName(void)=0;
+	virtual ret_line colNames(void)=0;
+	
+	virtual ret_str get_TEXT()=0;
+	virtual ret_line getRow_TEXT()=0;
 };
 
 class Conn {
@@ -81,7 +92,7 @@ public:
     };
 
     virtual Result exec(std::string)=0;
-	//virtual Stmt preCompile(std::string)=0;
+	virtual std::unique_ptr<Stmt> preCompile(std::string_view)=0;
 
 	bool create(
 		std::string, std::vector<std::string>, 
@@ -117,31 +128,27 @@ public:
 	~SQLiteConn();
 
 	Result exec(std::string) override;
-	//Stmt preCompile(std::string) override;
+	std::unique_ptr<Stmt> preCompile(std::string_view) override;
 };
 
 class SQLiteStmt: public Stmt {
 private:
 	sqlite3_stmt *stmt_;
 	sqlite3* db_;
-
-	SQLiteStmt(sqlite3* db, std::string_view sql_stmt) : db_(db) {
-		int rc_ = sqlite3_prepare_v2(db_, sql_stmt.data(), sql_stmt.length(), &this->stmt_, NULL);
-		std::unique_ptr<SQLiteError> sqlite_err = std::make_unique<SQLiteError>(rc_);
-		this->err_ = std::move(sqlite_err);
-	}
-	~SQLiteStmt(void);
 public:
-	bool fmt(std::vector<std::string_view>); // TODO: 所有需要绑定的值均视为TEXT,需改进
-
-	int step(void); // TODO: 计划将状态码变得更加类型安全
-
-	int colCount(void);
-	ret_str colName(void);
-	ret_line colNames(void);
+	SQLiteStmt(sqlite3*, std::string_view);
+	~SQLiteStmt(void);
 	
-	ret_str get_TEXT();
-	ret_line getRow_TEXT();
+	bool fmt(std::vector<std::string_view>) override; 
+
+	int step(void) override; 
+
+	int colCount(void) override;
+	ret_str colName(void) override;
+	ret_line colNames(void) override;
+	
+	ret_str get_TEXT() override;
+	ret_line getRow_TEXT() override;
 };
 
 } // namespace SQL
