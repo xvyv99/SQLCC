@@ -58,7 +58,7 @@ IF(NOT TARGET spdlog)
 	FIND_PACKAGE(spdlog REQUIRED)
 ENDIF()
 
-FIND_PACKAGE(CLI11 CONFIG REQUIRED)
+# FIND_PACKAGE(CLI11 CONFIG REQUIRED)
 
 IF(NOT CLI11_FOUND)
   INCLUDE(FetchContent)
@@ -67,7 +67,7 @@ IF(NOT CLI11_FOUND)
     QUIET
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
     GIT_TAG v2.3.2
-  )
+)
 
   FetchContent_MakeAvailable(cli11_proj)
 ENDIF()

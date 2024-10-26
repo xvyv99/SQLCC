@@ -1,5 +1,7 @@
 #include "../src/dataframe.hpp"
 #include <gtest/gtest.h>
+#include <cstddef>
+#include <utility>
 
 TEST(DFtest, int) {
     DataFrame<int> df1{};
@@ -9,13 +11,15 @@ TEST(DFtest, int) {
     EXPECT_FALSE(df1.setColN({"abc", "def", "ghi", "kln"}));
     EXPECT_FALSE(df1.setColN({"abc", "kln"}));
     EXPECT_FALSE(df1.hasValue());
-    EXPECT_EQ(df1.shape(), std::make_pair(0, 3));
+	df_shape shape1 = std::make_pair(0, 3);
+	df_shape shape2 = std::make_pair(51, 3);
+    EXPECT_EQ(df1.shape(), shape1);
 
     EXPECT_TRUE(df1.addRow({1, 2, 3}));
     EXPECT_FALSE(df1.addRow({1, 3}));
     for (int i=0;i<50;i++)
         EXPECT_TRUE(df1.addRow({i+1, i+2, i+3}));
-    EXPECT_EQ(df1.shape(), std::make_pair(51, 3));
+    EXPECT_EQ(df1.shape(), shape2);
 
     EXPECT_EQ(df1.accessItem(0,2), 3);
     EXPECT_EQ(df1.accessItem(26,1), 27);
@@ -56,13 +60,16 @@ TEST(DFtest, string) {
     EXPECT_FALSE(df2.setColN({"abc", "def", "ghi", "kln"}));
     EXPECT_FALSE(df2.setColN({"abc", "kln"}));
     EXPECT_FALSE(df2.hasValue());
-    EXPECT_EQ(df2.shape(), std::make_pair(0, 7));
+
+	df_shape shape3 = std::make_pair(0, 7);
+	df_shape shape4 = std::make_pair(51, 7);
+    EXPECT_EQ(df2.shape(), shape3);
 
     EXPECT_TRUE(df2.addRow({"Hello", "World", "Exec", "Hello", "World", "Exec", "Exec"}));
     EXPECT_FALSE(df2.addRow({"What", "up"}));
     for (int i=0;i<50;i++)
         EXPECT_TRUE(df2.addRow({"1", "2", "3", "4", "5", "6", "7"}));
-    EXPECT_EQ(df2.shape(), std::make_pair(51, 7));
+    EXPECT_EQ(df2.shape(), shape4);
 
     EXPECT_EQ(df2.accessItem(50,6), "7");
     EXPECT_EQ(df2.accessItem(23,1), "2");

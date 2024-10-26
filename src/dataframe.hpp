@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include <optional>
 #include <string_view>
 #include <unordered_set>
@@ -60,7 +61,7 @@ DataFrame<T>::DataFrame(index_name coln) {
 
 template <typename T>
 std::optional<std::size_t> DataFrame<T>::canFindName(std::string_view col_name) {
-    auto it = std::find(this->col_names_.begin(), this->col_names_.end(), col_name);
+    auto it = std::find(this->col_names_.begin(), this->col_names_.end(), std::string(col_name));
     if (it!=this->col_names_.end()) {
         return std::distance(this->col_names_.begin(), it);
     } else {
