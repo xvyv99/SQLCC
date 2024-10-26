@@ -14,22 +14,16 @@
 #include <sqlite3.h>
 #include "sql.h"
 
-SQL::SQLiteError::SQLiteError(int err_code) {
-	this->rc_orig_ = err_code;
+SQL::Error SQL::SQLiteErrorTranform(int err_code) {
+	SQL::Error result;
 	switch (err_code) {
 	case SQLITE_OK:
-		this->rc_ = SQL::Error::Code::OK;
+		result = SQL::Error::OK;
 		break;
 	default:
-		this->rc_ = SQL::Error::Code::UNKNOWN;
+		result = SQL::Error::UNKNOWN;
 		break;
 	}
-}
-
-SQL::SQLiteError::~SQLiteError(void) {}
-
-bool SQL::SQLiteError::is(SQL::Error::Code err_code) {
-	return (this->rc_==err_code);
 }
 
 std::string SQL::Conn::getTypeName(ColType colt) {

@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 #include <cstddef>
+#include <expected>
 #include <memory>
 #include "dataframe.hpp"
 
@@ -12,35 +13,24 @@
 
 namespace SQL {
 
-class Error {
-public:
-	enum class Code {
-		OK, // 操作成功
-		ERROR, // 通用错误
-		INTERNAL, // SQL 内部逻辑错误
-		PERM, // 访问被拒绝
-		ABORT, // 操作被中止
-		BUSY, // 数据库文件被其他连接占用
-		LOCKED, // 数据库被锁定
-		NOMEM, // 内存不足
-		READONLY, // 数据库是只读的
-		INTERRUPT, // 操作被中断
-		UNKNOWN,
-	};
-
-	virtual bool is(Code)=0;
-protected:
-	enum Code rc_;
-	int rc_orig_;
+enum class Error {
+	OK, // 操作成功
+	ERROR, // 通用错误
+	INTERNAL, // SQL 内部逻辑错误
+	PERM, // 访问被拒绝
+	ABORT, // 操作被中止
+	BUSY, // 数据库文件被其他连接占用
+	LOCKED, // 数据库被锁定
+	NOMEM, // 内存不足
+	READONLY, // 数据库是只读的
+	INTERRUPT, // 操作被中断
+	UNKNOWN,
 };
 
-class SQLiteError: public Error {
-public:
-	SQLiteError(int);
-	~SQLiteError(void);
+template <typename T>
+using Err=std::expected<T, Error>;
 
-	bool is(Error::Code) override;
-};
+Error SQLiteErrorTranform(int);
 
 // using Result = DataFrame<std::string>;
 using col_name = std::vector<std::string>;
@@ -48,27 +38,12 @@ using ret_line = std::optional<std::vector<std::string_view>>;
 using ret_str = std::optional<std::string_view>;
 
 class Result: public DataFrame<std::string> {
-private:
-	std::unique_ptr<Error> err_; // 传递查询状态 // TODO:计划改成枚举形式，以兼容多种 SQL 数据库
-	// 使用智能指针的原因是为了调用抽象类 Error 的 is 方法
 public:
-	Result (std::unique_ptr<Error> err) : DataFrame<std::string>(), err_(std::move(err)) {};
-
-	bool isSuccess(void) {
-		return this->err_->is(Error::Code::OK);
-	};
+	Result () : DataFrame<std::string>() {};
 };
 
 class Stmt {
-protected:
-	// sql.. stmt_;
-	// ..Conn conn_;
-	std::unique_ptr<Error> err_; // 传递查询状态 // TODO:计划改成枚举形式，以兼容多种 SQL 数据库
 public:
-	bool isSuccess(void) const {
-		return (this->err_->is(Error::Code::OK));
-	}
-
 	virtual bool fmt(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
 
 	virtual int step(void)=0; 
@@ -91,21 +66,21 @@ public:
         TEXT, INTEGER, REAL, BLOB
     };
 
-    virtual Result exec(std::string)=0;
-	virtual std::unique_ptr<Stmt> preCompile(std::string_view)=0;
+    virtual Err<std::unique_ptr<Result>> exec(std::string)=0;
+	virtual Err<std::unique_ptr<Stmt>> preCompile(std::string_view)=0;
 
 	bool create(
 		std::string, std::vector<std::string>, 
 		std::vector<Conn::ColType>, bool
 	);
 
-    Result selectAll(std::string);
+    Err<std::unique_ptr<Result>> selectAll(std::string);
 
-    Result select(
+    Err<std::unique_ptr<Result>> select(
 		std::string, std::vector<std::string>, std::string
 	);
 
-	Result select(
+	Err<std::unique_ptr<Result>> select(
 		std::string, std::vector<std::string>
 	);
 
@@ -127,8 +102,8 @@ public:
 	SQLiteConn(std::string_view);
 	~SQLiteConn();
 
-	Result exec(std::string) override;
-	std::unique_ptr<Stmt> preCompile(std::string_view) override;
+	Err<std::unique_ptr<Result>> exec(std::string) override;
+	Err<std::unique_ptr<Stmt>> preCompile(std::string_view) override;
 };
 
 class SQLiteStmt: public Stmt {
