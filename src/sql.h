@@ -25,35 +25,40 @@ enum class Error {
 	READONLY, // 数据库是只读的
 	INTERRUPT, // 操作被中断
 	UNKNOWN,
+
+	PARAM_ERROR, // 参数错误
 };
 
-template <typename T>
+template <class T>
 using Err=std::expected<T, Error>;
+template <class T>
+using Err_ptr=std::expected<std::unique_ptr<T>, Error>;
 
 Error SQLiteErrorTranform(int);
+//Error MySQLErrorTranform(int);
 
-// using Result = DataFrame<std::string>;
+using Result = DataFrame<std::string>;
 using col_name = std::vector<std::string>;
 using ret_line = std::optional<std::vector<std::string_view>>;
 using ret_str = std::optional<std::string_view>;
 
-class Result: public DataFrame<std::string> {
+/*class Result: public DataFrame<std::string> {
 public:
 	Result () : DataFrame<std::string>() {};
-};
+};*/
 
 class Stmt {
 public:
-	virtual bool fmt(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
+	virtual Error fmt(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
 
-	virtual int step(void)=0; 
+	virtual Error step(void)=0; 
 
-	virtual int colCount(void)=0;
-	virtual ret_str colName(void)=0;
-	virtual ret_line colNames(void)=0;
+	virtual Err<int> colCount(void)=0;
+	virtual Err<ret_str> colName(void)=0;
+	virtual Err<ret_line> colNames(void)=0;
 	
-	virtual ret_str get_TEXT()=0;
-	virtual ret_line getRow_TEXT()=0;
+	virtual Err<ret_str> get_TEXT()=0;
+	virtual Err<ret_line> getRow_TEXT()=0;
 };
 
 class Conn {
@@ -66,10 +71,10 @@ public:
         TEXT, INTEGER, REAL, BLOB
     };
 
-    virtual Err<std::unique_ptr<Result>> exec(std::string)=0;
-	virtual Err<std::unique_ptr<Stmt>> preCompile(std::string_view)=0;
+    virtual Err_ptr<Result> exec(std::string)=0;
+	virtual Err_ptr<Stmt> preCompile(std::string_view)=0;
 
-	bool create(
+	Error create(
 		std::string, std::vector<std::string>, 
 		std::vector<Conn::ColType>, bool
 	);
@@ -88,7 +93,7 @@ public:
 	bool update(void);
 	bool del(void);
 
-	Result getTables(void);
+	Err<Result> getTables(void);
 private:
 	static std::string getTypeName(ColType);
 };
@@ -102,28 +107,29 @@ public:
 	SQLiteConn(std::string_view);
 	~SQLiteConn();
 
-	Err<std::unique_ptr<Result>> exec(std::string) override;
-	Err<std::unique_ptr<Stmt>> preCompile(std::string_view) override;
+	Err_ptr<Result> exec(std::string) override;
+	Err_ptr<Stmt> preCompile(std::string_view) override;
 };
 
 class SQLiteStmt: public Stmt {
 private:
 	sqlite3_stmt *stmt_;
 	sqlite3* db_;
+	Error err_;
 public:
 	SQLiteStmt(sqlite3*, std::string_view);
 	~SQLiteStmt(void);
 	
-	bool fmt(std::vector<std::string_view>) override; 
+	Error fmt(std::vector<std::string_view>) override; 
 
-	int step(void) override; 
+	Error step(void) override; 
 
-	int colCount(void) override;
-	ret_str colName(void) override;
-	ret_line colNames(void) override;
+	Err<int> colCount(void) override;
+	Err<ret_str> colName(void) override;
+	Err<ret_line> colNames(void) override;
 	
-	ret_str get_TEXT() override;
-	ret_line getRow_TEXT() override;
+	Err<ret_str> get_TEXT() override;
+	Err<ret_line> getRow_TEXT() override;
 };
 
 } // namespace SQL

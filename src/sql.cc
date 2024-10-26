@@ -14,6 +14,9 @@
 #include <sqlite3.h>
 #include "sql.h"
 
+using SQL::Err;
+using SQL::Err_ptr;
+
 SQL::Error SQL::SQLiteErrorTranform(int err_code) {
 	SQL::Error result;
 	switch (err_code) {
@@ -46,7 +49,7 @@ std::string SQL::Conn::getTypeName(ColType colt) {
 	} return res;
 }
 
-bool SQL::Conn::create(
+SQL::Error SQL::Conn::create(
 		std::string table_name, 
 		std::vector<std::string> col_names, 
 		std::vector<SQL::Conn::ColType> col_types,
@@ -55,7 +58,7 @@ bool SQL::Conn::create(
 	
 	std::ostringstream stmt;
 	if (col_names.size()!=col_types.size() || col_names.size()==0)
-		return false;
+		return SQL::Error::PARAM_ERROR;
 	int col_count = col_names.size();
 	stmt << "CREATE TABLE "
 		<<(create_if_not_exists ? "IF NOT EXISTS ":" ")
@@ -68,7 +71,7 @@ bool SQL::Conn::create(
 	} stmt << ");";
 	std::cout<<stmt.str()<<std::endl;
 
-	return this->exec(stmt.str()).isSuccess();
+	int rc = this->exec(stmt.str());
 }
 
 SQL::Result SQL::Conn::selectAll(std::string table_name) {
@@ -121,12 +124,13 @@ SQL::SQLiteConn::~SQLiteConn() {
 }
 
 // FIXME:所有的列全视为 TEXT,需要改进
-SQL::Result SQL::SQLiteConn::exec(std::string stmt) {
+Err_ptr<SQL::Result> SQL::SQLiteConn::exec(std::string stmt) {
+	Err_ptr<SQL::Result> res;
+
 	sqlite3_stmt* sql_stmt;
 	int rc = sqlite3_prepare_v2(this->db_, stmt.c_str(), stmt.length(), &sql_stmt, NULL);
-	std::unique_ptr<SQLiteError> sqlite_err = std::make_unique<SQLiteError>(rc);
-	SQL::Result sqlite_res{std::move(sqlite_err)};
 	if (rc==SQLITE_OK) {
+		SQL::Result sqlite_res;
 		while (sqlite3_step(sql_stmt)==SQLITE_ROW) {
 			int col_count = sqlite3_column_count(sql_stmt);
 			if (!sqlite_res.hasValue()) {
@@ -147,36 +151,37 @@ SQL::Result SQL::SQLiteConn::exec(std::string stmt) {
 			}
 			sqlite_res.addRow(row);
 		}
+		res = sqlite_res; // FIXME: 需完成到智能指针的转换
 	} else {
 		spdlog::error("SQL error {}!", sqlite3_errmsg(this->db_));
+		res = std::unexpected(SQL::SQLiteErrorTranform(rc));
 	}
 
 	sqlite3_finalize(sql_stmt);
-	return sqlite_res;
+	return res;
 }
 
 SQL::SQLiteStmt::SQLiteStmt(sqlite3* db, std::string_view sql_stmt) : db_(db) {
 	int rc_ = sqlite3_prepare_v2(db_, sql_stmt.data(), sql_stmt.length(), &this->stmt_, NULL);
-	std::unique_ptr<SQLiteError> sqlite_err = std::make_unique<SQLiteError>(rc_);
-	this->err_ = std::move(sqlite_err);
+	this->err_ = SQL::SQLiteErrorTranform(rc_);
 }
 
 SQL::SQLiteStmt::~SQLiteStmt() {}
 
-bool SQL::SQLiteStmt::fmt(std::vector<std::string_view> params) {
+SQL::Error SQL::SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	int bind_param_count = sqlite3_bind_parameter_count(this->stmt_);
 	int count = std::min(static_cast<size_t>(bind_param_count), params.size());
 	for (int i=0;i<count;i++) {
 		sqlite3_bind_text(this->stmt_, i+1, params[i].data(), params[i].length(), SQLITE_TRANSIENT);
 	}
-	return true;
-}
+	return SQL::Error::OK;
+} // FIXME: 目前只会返回 Error::OK 
 
-int SQL::SQLiteStmt::step() {}
+SQL::Error SQL::SQLiteStmt::step(void) {}
 
-int SQL::SQLiteStmt::colCount() {}
-SQL::ret_str SQL::SQLiteStmt::colName() {}
-SQL::ret_line SQL::SQLiteStmt::colNames() {}
+Err<int> SQL::SQLiteStmt::colCount(void) {}
+Err<SQL::ret_str> SQL::SQLiteStmt::colName(void) {}
+Err<SQL::ret_line>SQL::SQLiteStmt::colNames(void) {}
 
-SQL::ret_str SQL::SQLiteStmt::get_TEXT() {}
-SQL::ret_line SQL::SQLiteStmt::getRow_TEXT() {}
+Err<SQL::ret_str> SQL::SQLiteStmt::get_TEXT() {}
+Err<SQL::ret_line> SQL::SQLiteStmt::getRow_TEXT() {}
