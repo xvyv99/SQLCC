@@ -7,8 +7,8 @@
 #include <utility>
 #include <optional>
 #include <expected>
+#include <exception>
 #include <sstream>
-#include "spdlog/spdlog.h"
 #include <memory>
 
 #include <sqlite3.h>
@@ -27,6 +27,7 @@ SQL::Error SQL::SQLiteErrorTranform(int err_code) {
 		result = SQL::Error::UNKNOWN;
 		break;
 	}
+	return result;
 }
 
 std::string SQL::Conn::getTypeName(ColType colt) {
@@ -71,36 +72,41 @@ SQL::Error SQL::Conn::create(
 	} stmt << ");";
 	std::cout<<stmt.str()<<std::endl;
 
-	int rc = this->exec(stmt.str());
+	Err_ptr<Result> epr = this->exec(stmt.str());
+	if (epr.has_value()) {
+		return Error::OK;
+	} else {
+		return epr.error();
+	}
 }
 
-SQL::Result SQL::Conn::selectAll(std::string table_name) {
+Err_ptr<SQL::Result> SQL::Conn::selectAll(std::string table_name) {
 	constexpr char stmt[] = "SELECT * FROM ?";
-	return SQL::Result(SQLITE_OK);
+	return std::make_unique<SQL::Result>();
 } // TODO
 
-SQL::Result SQL::Conn::select(
+Err_ptr<SQL::Result> SQL::Conn::select(
 	std::string table_name, 
 	std::vector<std::string> col_names,
 	std::string sub_stmt
 	) {
 
 	constexpr char stmt[] = "SELECT  FROM ";
-	return SQL::Result(SQLITE_OK);
+	return std::make_unique<SQL::Result>();
 } // TODO
 
-SQL::Result SQL::Conn::select(
+Err_ptr<SQL::Result> SQL::Conn::select(
 	std::string table_name, 
 	std::vector<std::string> col_names
 	) {
-	return SQL::Result(SQLITE_OK);
+	return std::make_unique<SQL::Result>();
 } // TODO
 
 bool SQL::Conn::insert(void) {return true;} // TODO
 bool SQL::Conn::update(void) {return true;} // TODO
 bool SQL::Conn::del(void) {return true;} // TODO
 
-SQL::Result SQL::Conn::getTables(void) {
+Err_ptr<SQL::Result> SQL::Conn::getTables(void) {
 	constexpr char stmt[] = "SELECT * FROM sqlite_master WHERE type='table';";
 	return this->exec(std::string(stmt));
 }
@@ -113,7 +119,7 @@ std::unique_ptr<SQL::Stmt> SQL::SQLiteConn::preCompile(std::string_view stmt) {
 SQL::SQLiteConn::SQLiteConn(std::string_view db_path) {
     int64_t rc = sqlite3_open(db_path.data(), &(this->db_));
     if (rc) {
-		spdlog::error("Can't open database {}!", sqlite3_errmsg(this->db_));
+		std::cout<<"Can't open database {}!"<<sqlite3_errmsg(this->db_)<<std::endl;
         sqlite3_close(this->db_);
         exit(1);
     }
@@ -130,15 +136,15 @@ Err_ptr<SQL::Result> SQL::SQLiteConn::exec(std::string stmt) {
 	sqlite3_stmt* sql_stmt;
 	int rc = sqlite3_prepare_v2(this->db_, stmt.c_str(), stmt.length(), &sql_stmt, NULL);
 	if (rc==SQLITE_OK) {
-		SQL::Result sqlite_res;
+		std::unique_ptr<SQL::Result> sqlite_res = std::make_unique<SQL::Result>();
 		while (sqlite3_step(sql_stmt)==SQLITE_ROW) {
 			int col_count = sqlite3_column_count(sql_stmt);
-			if (!sqlite_res.hasValue()) {
+			if (!sqlite_res->hasValue()) {
 				std::vector<std::string> col_names;
 				for (int i=0;i<col_count;i++) {
 					col_names.emplace_back(sqlite3_column_name(sql_stmt, i));
 				}
-				sqlite_res.setColN(col_names);
+				sqlite_res->setColN(col_names);
 			}
 			std::vector<std::string> row; row.reserve(col_count); //预留指定大小,防止多次分配
 			for (int i=0;i<col_count;i++) {
@@ -149,11 +155,11 @@ Err_ptr<SQL::Result> SQL::SQLiteConn::exec(std::string stmt) {
                 	row.push_back("");  
             	}
 			}
-			sqlite_res.addRow(row);
+			sqlite_res->addRow(row);
 		}
-		res = sqlite_res; // FIXME: 需完成到智能指针的转换
+		res = std::move(sqlite_res); // FIXME: 需完成到智能指针的转换
 	} else {
-		spdlog::error("SQL error {}!", sqlite3_errmsg(this->db_));
+		std::cout<<"SQL error {}!"<<sqlite3_errmsg(this->db_)<<std::endl;
 		res = std::unexpected(SQL::SQLiteErrorTranform(rc));
 	}
 
@@ -177,11 +183,11 @@ SQL::Error SQL::SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	return SQL::Error::OK;
 } // FIXME: 目前只会返回 Error::OK 
 
-SQL::Error SQL::SQLiteStmt::step(void) {}
+SQL::Error SQL::SQLiteStmt::step(void) {return Error::OK;}
 
-Err<int> SQL::SQLiteStmt::colCount(void) {}
-Err<SQL::ret_str> SQL::SQLiteStmt::colName(void) {}
-Err<SQL::ret_line>SQL::SQLiteStmt::colNames(void) {}
+Err<int> SQL::SQLiteStmt::colCount(void) {return std::unexpected(Error::OK);}
+Err<SQL::ret_str> SQL::SQLiteStmt::colName(void) {return std::unexpected(Error::OK);}
+Err<SQL::ret_line> SQL::SQLiteStmt::colNames(void) {return std::unexpected(Error::OK);}
 
-Err<SQL::ret_str> SQL::SQLiteStmt::get_TEXT() {}
-Err<SQL::ret_line> SQL::SQLiteStmt::getRow_TEXT() {}
+Err<SQL::ret_str> SQL::SQLiteStmt::get_TEXT() {return std::unexpected(Error::OK);}
+Err<SQL::ret_line> SQL::SQLiteStmt::getRow_TEXT() {return std::unexpected(Error::OK);}

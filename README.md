@@ -1,3 +1,3 @@
-# FileMeta
+# SQLCC
 
-A tool for adding metadata to files.
+Encapsulation designed to be compatible with multiple SQL databases (currently only supports Sqlite3).

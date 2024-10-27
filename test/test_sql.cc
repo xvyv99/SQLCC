@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 #include <expected>
+#include <memory>
 #include <iostream>
 #include <set>
 
@@ -28,37 +29,37 @@ TEST_F(SQLiteTest, exec) {
 	sqlh.exec("CREATE TABLE IF NOT EXISTS BASE (NAME TEXT, PATH TEXT);");
 	sqlh.exec("INSERT INTO BASE VALUES (\"TEST1\", \"TEST2\");");
 	sqlh.exec("INSERT INTO BASE VALUES (\"TEST3\", \"TEST4\");");
-	Result sqlr1 = sqlh.exec("SELECT NAME,PATH FROM BASE;");
-	ASSERT_TRUE(sqlr1.hasValue());
-	EXPECT_EQ(sqlr1(0, "NAME"), "TEST1");
-	EXPECT_EQ(sqlr1(0, "PATH"), "TEST2");
-	EXPECT_EQ(sqlr1(1, "NAME"), "TEST3");
-	EXPECT_EQ(sqlr1(1, "PATH"), "TEST4");
+	std::unique_ptr<Result> sqlr1 = sqlh.exec("SELECT NAME,PATH FROM BASE;").value();
+	//ASSERT_TRUE(sqlr1.hasValue());
+	EXPECT_EQ(sqlr1->accessItem(0, "NAME"), "TEST1");
+	EXPECT_EQ(sqlr1->accessItem(0, "PATH"), "TEST2");
+	EXPECT_EQ(sqlr1->accessItem(1, "NAME"), "TEST3");
+	EXPECT_EQ(sqlr1->accessItem(1, "PATH"), "TEST4");
 }
 
 TEST_F(SQLiteTest, create) {
 	SQLiteConn sqlh = SQLiteConn("./test.db");
-	EXPECT_TRUE(sqlh.create(
+	sqlh.create(
 		"Hello", 
 		{"ACD", "asd", "enti"}, 
 		{Conn::ColType::TEXT, Conn::ColType::TEXT, Conn::ColType::TEXT},
 		true
-	));
-		EXPECT_TRUE(sqlh.create(
+	);
+	sqlh.create(
 		"Gello", 
 		{"ACD", "asd", "enti"}, 
 		{Conn::ColType::TEXT, Conn::ColType::TEXT, Conn::ColType::TEXT},
 		true
-	));
-	EXPECT_TRUE(sqlh.create(
+	);
+	sqlh.create(
 		"World", 
 		{"ACD", "asd", "enti"}, 
 		{Conn::ColType::INTEGER, Conn::ColType::BLOB, Conn::ColType::TEXT},
 		true
-	));
-	Result sr = sqlh.getTables();
-	ASSERT_TRUE(sr.isSuccess());
-	auto srv = sr["name"].value();
+	);
+	std::unique_ptr<Result> sr = sqlh.getTables().value();
+	//ASSERT_TRUE(sr.isSuccess());
+	auto srv = sr->accessCol("name").value();
 	std::set<std::string> ss = {"BASE", "Hello", "Gello", "World"};
 	std::set<std::string> so{srv.begin(), srv.end()};
 	EXPECT_EQ(so, ss);

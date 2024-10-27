@@ -72,7 +72,7 @@ public:
     };
 
     virtual Err_ptr<Result> exec(std::string)=0;
-	virtual Err_ptr<Stmt> preCompile(std::string_view)=0;
+	virtual std::unique_ptr<Stmt> preCompile(std::string_view)=0;
 
 	Error create(
 		std::string, std::vector<std::string>, 
@@ -93,7 +93,7 @@ public:
 	bool update(void);
 	bool del(void);
 
-	Err<Result> getTables(void);
+	Err_ptr<Result> getTables(void);
 private:
 	static std::string getTypeName(ColType);
 };
@@ -108,7 +108,7 @@ public:
 	~SQLiteConn();
 
 	Err_ptr<Result> exec(std::string) override;
-	Err_ptr<Stmt> preCompile(std::string_view) override;
+	std::unique_ptr<Stmt> preCompile(std::string_view) override;
 };
 
 class SQLiteStmt: public Stmt {
