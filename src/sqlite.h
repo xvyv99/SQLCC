@@ -5,6 +5,7 @@
 
 namespace SQL {
 
+int SQLiteCallBack(void*, int, char**, char**);
 Error SQLiteErrorTranform(int);
 
 class SQLiteConn: public Conn {

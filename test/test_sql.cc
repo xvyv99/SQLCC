@@ -52,6 +52,19 @@ TEST_F(SQLiteTest, query) {
 	EXPECT_EQ(sqlr1->accessItem(1, "PATH"), "TEST4");
 }
 
+TEST_F(SQLiteTest, exec_v1) {
+	SQLiteConn sqlh = SQLiteConn("./test.db");
+	sqlh.exec_v1("CREATE TABLE IF NOT EXISTS BASE (NAME TEXT, PATH TEXT);");
+	sqlh.exec_v1("INSERT INTO BASE VALUES (\"TEST1\", \"TEST2\");");
+	sqlh.exec_v1("INSERT INTO BASE VALUES (\"TEST3\", \"TEST4\");");
+	std::unique_ptr<Result> sqlr1 = sqlh.exec_v1("SELECT NAME,PATH FROM BASE;").value();
+	//ASSERT_TRUE(sqlr1.hasValue());
+	EXPECT_EQ(sqlr1->accessItem(0, "NAME"), "TEST1");
+	EXPECT_EQ(sqlr1->accessItem(0, "PATH"), "TEST2");
+	EXPECT_EQ(sqlr1->accessItem(1, "NAME"), "TEST3");
+	EXPECT_EQ(sqlr1->accessItem(1, "PATH"), "TEST4");
+}
+
 TEST_F(SQLiteTest, create) {
 	SQLiteConn sqlh = SQLiteConn("./test.db");
 	sqlh.create(

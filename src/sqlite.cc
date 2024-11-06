@@ -17,6 +17,26 @@
 
 namespace SQL {
 
+int SQLiteCallBack(void *res, int argc, char **argv, char **azColName) {
+	std::vector<std::string> row; row.reserve(argc);
+	Result *sqlite_res = static_cast<Result*>(res);
+
+	if (!sqlite_res->hasValue()) {
+		std::vector<std::string> col_names; col_names.reserve(argc);
+		for (int i=0; i<argc; i++) {
+			col_names.emplace_back(std::string(azColName[i]));
+		}
+		sqlite_res->setColN(col_names);
+	} 
+
+    for (int i = 0; i < argc; i++) {
+		row.emplace_back(argv[i]);
+    }
+	sqlite_res->addRow(row);
+
+    return 0;
+}
+
 Error SQLiteErrorTranform(int err_code) {
 	Error result;
 	switch (err_code) {
@@ -93,7 +113,7 @@ Err_ptr<Result> SQLiteConn::exec(std::string stmt) {
 				}
 				sqlite_res->setColN(col_names);
 			}
-			std::vector<std::string> row; row.reserve(col_count); //预留指定大小,防止多次分配
+			std::vector<std::string> row; row.reserve(col_count); 
 			for (int i=0;i<col_count;i++) {
 				const unsigned char* text_value = sqlite3_column_text(sql_stmt, i);
 				if (text_value) {
@@ -112,6 +132,19 @@ Err_ptr<Result> SQLiteConn::exec(std::string stmt) {
 
 	sqlite3_finalize(sql_stmt);
 	return res;
+}
+
+Err_ptr<Result> SQLiteConn::exec_v1(std::string stmt) {
+    char *zErrMsg = NULL;
+	Result res;
+    int rc = sqlite3_exec(this->db_, stmt.c_str(), SQLiteCallBack, &res, &zErrMsg);
+    if (rc!=SQLITE_OK) {
+		std::cout<<"SQL error {}!"<<sqlite3_errmsg(this->db_)<<std::endl;
+        sqlite3_free(zErrMsg);
+		return std::unexpected(SQLiteErrorTranform(rc));
+    }
+    return std::make_unique<Result>(res);
+	// FIXME: 如何处理这个 void* ,也许会有更好的做法.
 }
 
 SQLiteStmt::SQLiteStmt(sqlite3* db, std::string_view sql_stmt) {
