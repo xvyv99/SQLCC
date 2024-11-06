@@ -96,7 +96,7 @@ Err_ptr<SQL::Result> SQL::Conn::select(
 } // TODO
 
 Err_ptr<SQL::Result> SQL::Conn::select(
-	std::string table_name, 
+	std::string table_name,
 	std::vector<std::string> col_names
 	) {
 	return std::make_unique<SQL::Result>();
@@ -183,11 +183,13 @@ SQL::Error SQL::SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	return SQL::Error::OK;
 } // FIXME: 目前只会返回 Error::OK 
 
-SQL::Error SQL::SQLiteStmt::step(void) {return Error::OK;}
+SQL::Error SQL::SQLiteStmt::step(void) {return Error::OK;} // TODO
 
-Err<int> SQL::SQLiteStmt::colCount(void) {return std::unexpected(Error::OK);}
-Err<SQL::ret_str> SQL::SQLiteStmt::colName(void) {return std::unexpected(Error::OK);}
-Err<SQL::ret_line> SQL::SQLiteStmt::colNames(void) {return std::unexpected(Error::OK);}
+Err_ptr<SQL::Result> SQL::SQLiteStmt::query() {return std::make_unique<SQL::Result>();};
 
-Err<SQL::ret_str> SQL::SQLiteStmt::get_TEXT() {return std::unexpected(Error::OK);}
-Err<SQL::ret_line> SQL::SQLiteStmt::getRow_TEXT() {return std::unexpected(Error::OK);}
+Err<int> SQL::SQLiteStmt::colCount(void) {return std::unexpected(Error::OK);} // TODO
+Err<SQL::ret_str> SQL::SQLiteStmt::colName(void) {return std::unexpected(Error::OK);} // TODO
+Err<SQL::ret_line> SQL::SQLiteStmt::colNames(void) {return std::unexpected(Error::OK);} // TODO
+
+Err<SQL::ret_str> SQL::SQLiteStmt::get_TEXT() {return std::unexpected(Error::OK);} // TODO
+Err<SQL::ret_line> SQL::SQLiteStmt::getRow_TEXT() {return std::unexpected(Error::OK);} // TODO

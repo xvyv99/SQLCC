@@ -59,6 +59,8 @@ public:
 	
 	virtual Err<ret_str> get_TEXT()=0;
 	virtual Err<ret_line> getRow_TEXT()=0;
+
+	virtual Err_ptr<Result> query()=0;
 };
 
 class Conn {
@@ -122,7 +124,7 @@ public:
 	
 	Error fmt(std::vector<std::string_view>) override; 
 
-	Error step(void) override; 
+	Error step(void) override;
 
 	Err<int> colCount(void) override;
 	Err<ret_str> colName(void) override;
@@ -130,6 +132,8 @@ public:
 	
 	Err<ret_str> get_TEXT() override;
 	Err<ret_line> getRow_TEXT() override;
+
+	Err_ptr<Result> query() override;
 };
 
 } // namespace SQL
