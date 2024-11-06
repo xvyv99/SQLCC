@@ -17,6 +17,7 @@ public:
 	~SQLiteConn();
 
 	Err_ptr<Result> exec(std::string) override;
+	Err_ptr<Result> exec_v1(std::string);
 	std::unique_ptr<Stmt> preCompile(std::string_view) override;
 };
 
@@ -31,14 +32,13 @@ public:
 	
 	Error fmt(std::vector<std::string_view>) override; 
 
-	Error step(void) override;
+	Err<bool> step(void) override;
 
-	Err<int> colCount(void) override;
-	Err<ret_str> colName(void) override;
-	Err<ret_line> colNames(void) override;
+	unsigned int colCount(void) override;
+	std::vector<std::string> colNames(void) override;
 	
 	Err<ret_str> get_TEXT() override;
-	Err<ret_line> getRow_TEXT() override;
+	std::vector<std::string> getRow_TEXT() override;
 
 	Err_ptr<Result> query() override;
 };

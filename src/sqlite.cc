@@ -3,11 +3,11 @@
 #include <string_view>
 #include <vector>
 #include <cstddef>
-#include <iterator>
+
 #include <utility>
 #include <optional>
 #include <expected>
-#include <exception>
+#include <stdexcept>
 #include <sstream>
 #include <memory>
 
@@ -23,8 +23,36 @@ Error SQLiteErrorTranform(int err_code) {
 	case SQLITE_OK:
 		result = Error::OK;
 		break;
+	case SQLITE_ABORT:
+		result = Error::ABORT;
+		break;
+	case SQLITE_BUSY:
+		result = Error::BUSY;
+		break;
+	case SQLITE_ERROR:
+		result = Error::ERROR;
+		break;
+	case SQLITE_INTERNAL:
+		result = Error::INTERNAL;
+		break;
+	case SQLITE_INTERRUPT:
+		result = Error::INTERRUPT;
+		break;
+	case SQLITE_LOCKED:
+		result = Error::LOCKED;
+		break;
+	case SQLITE_NOMEM:
+		result = Error::NOMEM;
+		break;
+	case SQLITE_PERM:
+		result = Error::PERM;
+		break;
+	case SQLITE_READONLY:
+		result = Error::READONLY;
+		break;
 	default:
 		result = Error::UNKNOWN;
+		throw std::logic_error("Unknown Error in SQLite!");
 		break;
 	}
 	return result;
@@ -91,7 +119,9 @@ SQLiteStmt::SQLiteStmt(sqlite3* db, std::string_view sql_stmt) : db_(db) {
 	this->err_ = SQLiteErrorTranform(rc_);
 }
 
-SQLiteStmt::~SQLiteStmt() {}
+SQLiteStmt::~SQLiteStmt() {
+	sqlite3_finalize(this->stmt_);
+}
 
 Error SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	int bind_param_count = sqlite3_bind_parameter_count(this->stmt_);
@@ -102,15 +132,52 @@ Error SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	return Error::OK;
 } // FIXME: 目前只会返回 Error::OK 
 
-Error SQLiteStmt::step(void) {return Error::OK;} // TODO
+Err<bool> SQLiteStmt::step(void) {
+	int rc = sqlite3_step(this->stmt_);
+	if (rc==SQLITE_ROW) {
+		return true;
+	} else if (rc==SQLITE_DONE) {
+		return false;
+	} else {
+		return std::unexpected(SQLiteErrorTranform(rc)); 
+	}
+} // FIXME: 如果出现问题,似乎没有回旋的余地
 
-Err_ptr<Result> SQLiteStmt::query() {return std::make_unique<Result>();};
+Err_ptr<Result> SQLiteStmt::query(void) {
+	std::vector<std::string> col_names = this->colNames();
+	std::unique_ptr<Result> res = std::make_unique<Result>(col_names);
 
-Err<int> SQLiteStmt::colCount(void) {return std::unexpected(Error::OK);} // TODO
-Err<ret_str> SQLiteStmt::colName(void) {return std::unexpected(Error::OK);} // TODO
-Err<ret_line> SQLiteStmt::colNames(void) {return std::unexpected(Error::OK);} // TODO
+	while (this->step().value()) {
+		res->addRow(this->getRow_TEXT());
+	}
+
+	return std::move(res);
+}; // FIXME: this->step().value() 处可能会崩溃
+
+unsigned int SQLiteStmt::colCount(void) {
+	return sqlite3_column_count(this->stmt_);
+}
+
+std::vector<std::string> SQLiteStmt::colNames(void) {
+	unsigned int col_count = this->colCount();
+	std::vector<std::string> res; res.reserve(col_count);
+	for (int i=0;i<col_count;i++) {
+		res.emplace_back(sqlite3_column_name(this->stmt_, i));
+	}
+	return res;
+}
 
 Err<ret_str> SQLiteStmt::get_TEXT() {return std::unexpected(Error::OK);} // TODO
-Err<ret_line> SQLiteStmt::getRow_TEXT() {return std::unexpected(Error::OK);} // TODO
+
+std::vector<std::string> SQLiteStmt::getRow_TEXT(void) {
+	unsigned int col_count = this->colCount();
+	std::vector<std::string> res; res.reserve(col_count);
+	for (int i=0;i<col_count;i++) {
+		std::string tmp = reinterpret_cast<const char*>(sqlite3_column_text(this->stmt_, i));
+		res.push_back(tmp);
+		// FIXME: 感觉不太可靠
+	}
+	return res;
+} // FIXME: 可能会出现在关闭数据库上操作的情况
 
 }

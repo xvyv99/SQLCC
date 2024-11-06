@@ -36,8 +36,8 @@ using Err_ptr=std::expected<std::unique_ptr<T>, Error>;
 
 using Result = DataFrame<std::string>;
 using col_name = std::vector<std::string>;
-using ret_line = std::optional<std::vector<std::string_view>>;
-using ret_str = std::optional<std::string_view>;
+using ret_line = std::optional<std::vector<std::string>>;
+using ret_str = std::optional<std::string>;
 
 /*class Result: public DataFrame<std::string> {
 public:
@@ -48,14 +48,13 @@ class Stmt {
 public:
 	virtual Error fmt(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
 
-	virtual Error step(void)=0; 
+	virtual Err<bool> step(void)=0; 
 
-	virtual Err<int> colCount(void)=0;
-	virtual Err<ret_str> colName(void)=0;
-	virtual Err<ret_line> colNames(void)=0;
+	virtual unsigned int colCount(void)=0;
+	virtual std::vector<std::string> colNames(void)=0;
 	
 	virtual Err<ret_str> get_TEXT()=0;
-	virtual Err<ret_line> getRow_TEXT()=0;
+	virtual std::vector<std::string> getRow_TEXT()=0;
 
 	virtual Err_ptr<Result> query()=0;
 };
