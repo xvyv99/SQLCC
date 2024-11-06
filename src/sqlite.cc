@@ -114,8 +114,8 @@ Err_ptr<Result> SQLiteConn::exec(std::string stmt) {
 	return res;
 }
 
-SQLiteStmt::SQLiteStmt(sqlite3* db, std::string_view sql_stmt) : db_(db) {
-	int rc_ = sqlite3_prepare_v2(db_, sql_stmt.data(), sql_stmt.length(), &this->stmt_, NULL);
+SQLiteStmt::SQLiteStmt(sqlite3* db, std::string_view sql_stmt) {
+	int rc_ = sqlite3_prepare_v2(db, sql_stmt.data(), sql_stmt.length(), &this->stmt_, NULL);
 	this->err_ = SQLiteErrorTranform(rc_);
 }
 
@@ -175,7 +175,7 @@ std::vector<std::string> SQLiteStmt::getRow_TEXT(void) {
 	for (int i=0;i<col_count;i++) {
 		std::string tmp = reinterpret_cast<const char*>(sqlite3_column_text(this->stmt_, i));
 		res.push_back(tmp);
-		// FIXME: 感觉不太可靠
+		// FIXME: 感觉不太可靠...
 	}
 	return res;
 } // FIXME: 可能会出现在关闭数据库上操作的情况

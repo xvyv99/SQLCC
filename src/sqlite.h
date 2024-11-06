@@ -24,7 +24,6 @@ public:
 class SQLiteStmt: public Stmt {
 private:
 	sqlite3_stmt *stmt_;
-	sqlite3* db_;
 	Error err_;
 public:
 	SQLiteStmt(sqlite3*, std::string_view);
