@@ -34,9 +34,6 @@ using Err=std::expected<T, Error>;
 template <class T>
 using Err_ptr=std::expected<std::unique_ptr<T>, Error>;
 
-Error SQLiteErrorTranform(int);
-//Error MySQLErrorTranform(int);
-
 using Result = DataFrame<std::string>;
 using col_name = std::vector<std::string>;
 using ret_line = std::optional<std::vector<std::string_view>>;
@@ -98,42 +95,6 @@ public:
 	Err_ptr<Result> getTables(void);
 private:
 	static std::string getTypeName(ColType);
-};
-
-class SQLiteConn: public Conn {
-private:
-	sqlite3 *db_;
-public:
-	friend class SQLiteStmt;
-
-	SQLiteConn(std::string_view);
-	~SQLiteConn();
-
-	Err_ptr<Result> exec(std::string) override;
-	std::unique_ptr<Stmt> preCompile(std::string_view) override;
-};
-
-class SQLiteStmt: public Stmt {
-private:
-	sqlite3_stmt *stmt_;
-	sqlite3* db_;
-	Error err_;
-public:
-	SQLiteStmt(sqlite3*, std::string_view);
-	~SQLiteStmt(void);
-	
-	Error fmt(std::vector<std::string_view>) override; 
-
-	Error step(void) override;
-
-	Err<int> colCount(void) override;
-	Err<ret_str> colName(void) override;
-	Err<ret_line> colNames(void) override;
-	
-	Err<ret_str> get_TEXT() override;
-	Err<ret_line> getRow_TEXT() override;
-
-	Err_ptr<Result> query() override;
 };
 
 } // namespace SQL

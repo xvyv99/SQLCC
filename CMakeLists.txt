@@ -29,6 +29,7 @@ ADD_EXECUTABLE( test_df
 ADD_EXECUTABLE( test_sql
   	${PROJECT_SOURCE_DIR}/test/test_sql.cc
     ${PROJECT_SOURCE_DIR}/src/sql.cc
+    ${PROJECT_SOURCE_DIR}/src/sqlite.cc
 )
 
 TARGET_LINK_LIBRARIES( test_df PRIVATE GTest::gtest_main )

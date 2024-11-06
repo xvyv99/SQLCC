@@ -1,4 +1,4 @@
-#include "../src/sql.h"
+#include "../src/sqlite.h"
 #include <gtest/gtest.h>
 #include <optional>
 #include <expected>
