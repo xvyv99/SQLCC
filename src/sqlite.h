@@ -30,7 +30,8 @@ public:
 	SQLiteStmt(sqlite3*, std::string_view);
 	~SQLiteStmt(void);
 	
-	Error fmt(std::vector<std::string_view>) override; 
+	bool fmt(std::vector<std::string_view>) override;
+	void fmt_loose(std::vector<std::string_view>) override;
 
 	Err<bool> step(void) override;
 

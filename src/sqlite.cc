@@ -72,6 +72,7 @@ Error SQLiteErrorTranform(int err_code) {
 		break;
 	default:
 		result = Error::UNKNOWN;
+		std::cout<<"Unknown Error in SQLite! Error code is:"<<err_code<<std::endl;
 		throw std::logic_error("Unknown Error in SQLite!");
 		break;
 	}
@@ -156,14 +157,23 @@ SQLiteStmt::~SQLiteStmt() {
 	sqlite3_finalize(this->stmt_);
 }
 
-Error SQLiteStmt::fmt(std::vector<std::string_view> params) {
+bool SQLiteStmt::fmt(std::vector<std::string_view> params) {
+	int count = sqlite3_bind_parameter_count(this->stmt_);
+	if((count)!=params.size())
+		return false;
+	for (int i=0;i<count;i++) {
+		sqlite3_bind_text(this->stmt_, i+1, params[i].data(), params[i].length(), SQLITE_TRANSIENT);
+	}
+	return true;
+}
+
+void SQLiteStmt::fmt_loose(std::vector<std::string_view> params) {
 	int bind_param_count = sqlite3_bind_parameter_count(this->stmt_);
 	int count = std::min(static_cast<size_t>(bind_param_count), params.size());
 	for (int i=0;i<count;i++) {
 		sqlite3_bind_text(this->stmt_, i+1, params[i].data(), params[i].length(), SQLITE_TRANSIENT);
 	}
-	return Error::OK;
-} // FIXME: 目前只会返回 Error::OK 
+}
 
 Err<bool> SQLiteStmt::step(void) {
 	int rc = sqlite3_step(this->stmt_);

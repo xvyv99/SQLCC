@@ -27,6 +27,7 @@ enum class Error {
 	UNKNOWN,
 
 	PARAM_ERROR, // 参数错误
+	MISMATCH, // 数据类型不匹配
 };
 
 template <class T>
@@ -46,7 +47,8 @@ public:
 
 class Stmt {
 public:
-	virtual Error fmt(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
+	virtual bool fmt(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
+	virtual void fmt_loose(std::vector<std::string_view>)=0; // TODO: 所有需要绑定的值均视为TEXT,需改进
 
 	virtual Err<bool> step(void)=0; 
 
