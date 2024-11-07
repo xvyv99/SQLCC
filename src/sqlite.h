@@ -10,23 +10,28 @@ Error SQLiteErrorTranform(int);
 
 class SQLiteConn: public Conn {
 private:
-	sqlite3 *db_;
+	
 public:
+	sqlite3 *db_;
 	friend class SQLiteStmt;
 
 	SQLiteConn(std::string_view);
 	~SQLiteConn();
 
+	std::optional<std::string> errMsg(void);
+
 	Err_ptr<Result> exec(std::string) override;
 	Err_ptr<Result> exec_v1(std::string);
-	std::unique_ptr<Stmt> preCompile(std::string_view) override;
+	Err_ptr<Stmt> preCompile(std::string_view) override;
 };
 
 class SQLiteStmt: public Stmt {
 private:
 	sqlite3_stmt *stmt_;
-	Error err_;
+	int rc_;
 public:
+
+	friend class SQLiteConn;
 	SQLiteStmt(sqlite3*, std::string_view);
 	~SQLiteStmt(void);
 	

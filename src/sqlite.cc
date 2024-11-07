@@ -70,6 +70,9 @@ Error SQLiteErrorTranform(int err_code) {
 	case SQLITE_READONLY:
 		result = Error::READONLY;
 		break;
+	case SQLITE_MISUSE:
+		result = Error::MISUSE;
+		break;
 	default:
 		result = Error::UNKNOWN;
 		std::cout<<"Unknown Error in SQLite! Error code is:"<<err_code<<std::endl;
@@ -79,17 +82,33 @@ Error SQLiteErrorTranform(int err_code) {
 	return result;
 }
 
-std::unique_ptr<Stmt> SQLiteConn::preCompile(std::string_view stmt) {
+std::optional<std::string> SQLiteConn::errMsg(void) {
+	int rc = sqlite3_errcode(this->db_);
+	if (rc==SQLITE_OK) {
+		return std::nullopt;
+	} else {
+		const char* err_msg_c = sqlite3_errmsg(this->db_);
+		std::string err_msg{err_msg_c};
+		return err_msg;
+	}
+}
+
+Err_ptr<Stmt> SQLiteConn::preCompile(std::string_view stmt) {
 	std::unique_ptr<SQLiteStmt> sqlite_stmt = std::make_unique<SQLiteStmt>(this->db_, stmt);
-	return std::move(sqlite_stmt);
+	if (sqlite_stmt->rc_==SQLITE_OK) {
+		return std::move(sqlite_stmt);
+	} else {
+		return std::unexpected(SQLiteErrorTranform(sqlite_stmt->rc_));
+	}
 }
 
 SQLiteConn::SQLiteConn(std::string_view db_path) {
-    int64_t rc = sqlite3_open(db_path.data(), &(this->db_));
-    if (rc) {
+    int rc = sqlite3_open(db_path.data(), &(this->db_));
+    if (rc!=SQLITE_OK) {
 		std::cout<<"Can't open database {}!"<<sqlite3_errmsg(this->db_)<<std::endl;
         sqlite3_close(this->db_);
         exit(1);
+		std::terminate();
     }
 }
 
@@ -149,8 +168,7 @@ Err_ptr<Result> SQLiteConn::exec_v1(std::string stmt) {
 }
 
 SQLiteStmt::SQLiteStmt(sqlite3* db, std::string_view sql_stmt) {
-	int rc_ = sqlite3_prepare_v2(db, sql_stmt.data(), sql_stmt.length(), &this->stmt_, NULL);
-	this->err_ = SQLiteErrorTranform(rc_);
+	this->rc_ = sqlite3_prepare_v2(db, sql_stmt.data(), sql_stmt.length(), &this->stmt_, NULL);
 }
 
 SQLiteStmt::~SQLiteStmt() {
@@ -160,12 +178,17 @@ SQLiteStmt::~SQLiteStmt() {
 bool SQLiteStmt::fmt(std::vector<std::string_view> params) {
 	int count = sqlite3_bind_parameter_count(this->stmt_);
 	if((count)!=params.size())
+		std::cout<<"Count is:"<<count<<std::endl;
 		return false;
 	for (int i=0;i<count;i++) {
-		sqlite3_bind_text(this->stmt_, i+1, params[i].data(), params[i].length(), SQLITE_TRANSIENT);
+		int rc = sqlite3_bind_text(this->stmt_, i+1, params[i].data(), params[i].length(), SQLITE_TRANSIENT);
+		if (rc!=SQLITE_OK) {
+			std::cout<<rc<<std::endl;
+			return false;
+		}
 	}
 	return true;
-}
+} // FIXME
 
 void SQLiteStmt::fmt_loose(std::vector<std::string_view> params) {
 	int bind_param_count = sqlite3_bind_parameter_count(this->stmt_);
@@ -173,7 +196,7 @@ void SQLiteStmt::fmt_loose(std::vector<std::string_view> params) {
 	for (int i=0;i<count;i++) {
 		sqlite3_bind_text(this->stmt_, i+1, params[i].data(), params[i].length(), SQLITE_TRANSIENT);
 	}
-}
+} // FIXME
 
 Err<bool> SQLiteStmt::step(void) {
 	int rc = sqlite3_step(this->stmt_);

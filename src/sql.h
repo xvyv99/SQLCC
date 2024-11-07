@@ -28,7 +28,8 @@ enum class Error {
 
 	PARAM_ERROR, // 参数错误
 	MISMATCH, // 数据类型不匹配
-};
+	MISUSE,
+}; // TODO: 改成结构体,使得可以访问具体的错误信息
 
 template <class T>
 using Err=std::expected<T, Error>;
@@ -72,7 +73,7 @@ public:
     };
 
     virtual Err_ptr<Result> exec(std::string)=0;
-	virtual std::unique_ptr<Stmt> preCompile(std::string_view)=0;
+	virtual Err_ptr<Stmt> preCompile(std::string_view)=0;
 
 	Error create(
 		std::string, std::vector<std::string>, 
